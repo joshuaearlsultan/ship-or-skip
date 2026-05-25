@@ -45,7 +45,7 @@ function App() {
         />
       <main className="mx-auto max-w-3xl px-6 py-8 space-y-8">
         <InputSection busy={busy} onRun={handleRun} onModeChange={handleModeChange} />
-        <ResultPanel state={state} />
+        <ResultPanel state={state} onSwitchToMock={() => setEvalMode('mock')} />
       </main>
     </div>
   )

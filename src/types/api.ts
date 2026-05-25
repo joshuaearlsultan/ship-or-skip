@@ -4,6 +4,9 @@ export type ApiErrorCode =
   | 'upstream_error'
   | 'schema_violation'
   | 'internal'
+  | 'insufficient_credits'
+  | 'invalid_api_key'
+  | 'network_error'
 
 export interface ApiError {
   code: ApiErrorCode

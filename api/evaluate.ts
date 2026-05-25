@@ -1,4 +1,10 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Anthropic, {
+  APIError,
+  AuthenticationError,
+  RateLimitError,
+  APIConnectionError,
+  BadRequestError,
+} from "@anthropic-ai/sdk";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type {
   DecisionResult,
@@ -6,7 +12,7 @@ import type {
   ScoreBand,
   Verdict,
 } from "../src/types/decision";
-import type { ApiResponse } from "../src/types/api";
+import type { ApiError, ApiResponse } from "../src/types/api";
 import type { IdeaMode } from "../src/types/request";
 import {
   EvaluationRequestSchema,
@@ -26,8 +32,6 @@ let _client: Anthropic | null = null;
 
 function getClient(): Anthropic {
   if (!_client) {
-    console.log("ANTHROPIC_API_KEY exists:", !!process.env.ANTHROPIC_API_KEY);
-
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       throw new HandlerError(
@@ -261,6 +265,37 @@ class HandlerError extends Error {
 }
 
 // ---------------------------------------------------------------------------
+// Anthropic error parser — maps SDK errors to semantic ApiError codes
+// ---------------------------------------------------------------------------
+
+function parseAnthropicError(err: unknown): ApiError {
+  if (err instanceof AuthenticationError) {
+    return { code: "invalid_api_key", message: "API key is invalid or has expired." };
+  }
+  if (err instanceof RateLimitError) {
+    return { code: "rate_limited", message: "Anthropic rate limit exceeded. Try again shortly." };
+  }
+  if (err instanceof APIConnectionError) {
+    return { code: "network_error", message: "Could not connect to the Anthropic API." };
+  }
+  if (err instanceof BadRequestError) {
+    // Inspect the structured error body for credit / billing issues
+    const body = err.error as { error?: { type?: string; message?: string } } | null | undefined;
+    const innerMsg = body?.error?.message ?? err.message;
+    if (/credit|billing|balance/i.test(innerMsg)) {
+      return { code: "insufficient_credits", message: innerMsg };
+    }
+    return { code: "upstream_error", message: innerMsg };
+  }
+  if (err instanceof APIError) {
+    const message = err.message || "Upstream API error.";
+    return { code: "upstream_error", message };
+  }
+  const message = err instanceof Error ? err.message : "Upstream API error.";
+  return { code: "upstream_error", message };
+}
+
+// ---------------------------------------------------------------------------
 // Core evaluation logic
 // ---------------------------------------------------------------------------
 
@@ -282,7 +317,8 @@ export async function handleEvaluate(
   const req = parsed.data;
 
   // Mock mode — bypasses Anthropic entirely when USE_MOCK_EVALUATIONS != "false"
-  if (process.env.USE_MOCK_EVALUATIONS !== "false") {
+  const isMockMode = process.env.USE_MOCK_EVALUATIONS !== "false"
+  if (isMockMode) {
     return { ok: true, data: resolveMockResult(req.mode, req.idea) };
   }
 
@@ -338,8 +374,8 @@ export async function handleEvaluate(
     }
     toolInput = toolUseBlock.input;
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Upstream API error.";
-    return { ok: false, error: { code: "upstream_error", message } };
+    console.error("[evaluate] Anthropic API error:", err);
+    return { ok: false, error: parseAnthropicError(err) };
   }
 
   const latencyMs = Date.now() - startMs;

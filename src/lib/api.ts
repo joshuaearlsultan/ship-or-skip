@@ -22,7 +22,7 @@ export async function evaluate(
     if (err instanceof DOMException && err.name === 'AbortError') throw err
     return {
       ok: false,
-      error: { code: 'internal', message: 'Network error. Check your connection and try again.' },
+      error: { code: 'network_error', message: 'Network error. Check your connection and try again.' },
     }
   }
 

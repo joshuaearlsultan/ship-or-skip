@@ -15,15 +15,18 @@ import type { EvaluationRequest } from '../../types/request'
 import { LoadingState } from '../feedback/LoadingState'
 import { DecisionCard } from './DecisionCard'
 import { CopyEvaluationButton } from './CopyEvaluationButton'
+import { getFriendlyError } from '../../lib/friendlyError'
 
 interface ResultPanelProps {
   state: EvaluationState
+  onSwitchToMock?: () => void
 }
 
-export function ResultPanel({ state }: ResultPanelProps) {
+export function ResultPanel({ state, onSwitchToMock }: ResultPanelProps) {
   if (state.status === 'idle') return <EmptyState />
   if (state.status === 'loading') return <LoadingState />
-  if (state.status === 'error') return <ErrorState message={state.error.message} />
+  if (state.status === 'error')
+    return <ErrorState error={state.error} onSwitchToMock={onSwitchToMock} />
   // Key on idea+mode so ReadyState remounts (resetting local toast) on each new evaluation
   const resultKey = `${state.request.mode}:${state.request.idea}`
   return (
@@ -60,16 +63,53 @@ function EmptyState() {
   )
 }
 
-function ErrorState({ message }: { message: string }) {
+function ErrorState({
+  error,
+  onSwitchToMock,
+}: {
+  error: import('../../types/api').ApiError
+  onSwitchToMock?: () => void
+}) {
+  const friendly = getFriendlyError(error)
+  const hasActions = (friendly.actions?.length ?? 0) > 0
+  const showMock = friendly.showSwitchToMock && onSwitchToMock
+
   return (
     <div
       role="alert"
       className="rounded-xl border border-rose-200 bg-rose-50 p-5 dark:border-rose-900 dark:bg-rose-950"
     >
-      <p className="text-sm font-medium text-rose-800 dark:text-rose-200">
-        Could not evaluate.
+      <p className="text-sm font-semibold text-rose-800 dark:text-rose-200">
+        {friendly.title}
       </p>
-      <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">{message}</p>
+      <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">{friendly.message}</p>
+      {(hasActions || showMock) ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {friendly.actions?.map((action) => (
+            <a
+              key={action.href}
+              href={action.href}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm ring-1 ring-inset ring-neutral-200 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 dark:bg-surface-1 dark:text-neutral-200 dark:ring-surface-border dark:hover:bg-surface-2"
+            >
+              {action.label}
+              <svg className="h-3 w-3 opacity-50" viewBox="0 0 16 16" fill="none" aria-hidden>
+                <path d="M4 12L12 4M12 4H6M12 4v6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </a>
+          ))}
+          {showMock ? (
+            <button
+              type="button"
+              onClick={onSwitchToMock}
+              className="inline-flex items-center rounded-md bg-white px-3 py-1.5 text-xs font-medium text-neutral-700 shadow-sm ring-1 ring-inset ring-neutral-200 hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 dark:bg-surface-1 dark:text-neutral-200 dark:ring-surface-border dark:hover:bg-surface-2"
+            >
+              Switch to Mock Mode
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 }
@@ -112,7 +152,6 @@ function CacheToast({ show }: { show: boolean }) {
 
   useEffect(() => {
     if (!show) return
-    setVisible(true)
     timerRef.current = setTimeout(() => setVisible(false), 3000)
     return () => {
       if (timerRef.current !== null) clearTimeout(timerRef.current)
