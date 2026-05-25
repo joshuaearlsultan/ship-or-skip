@@ -1,47 +1,88 @@
+import { useEffect, useRef, useState } from 'react'
+
+const STEPS = [
+  'Assessing problem clarity',
+  'Reviewing evidence of need',
+  'Evaluating solution fit',
+  'Measuring user value',
+  'Calculating verdict',
+]
+
+// SVG arc spinner — r=40, circumference ≈ 251, 78% arc ≈ 196px, gap ≈ 55px
+function EvalSpinner() {
+  return (
+    <svg
+      width="72"
+      height="72"
+      viewBox="0 0 100 100"
+      aria-hidden
+      className="animate-spin text-neutral-800 dark:text-neutral-200"
+      style={{ animationDuration: '1.4s', animationTimingFunction: 'linear' }}
+    >
+      {/* Track ring */}
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="8"
+        strokeOpacity="0.1"
+      />
+      {/* Spinning arc — 78 % of circumference */}
+      <circle
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeDasharray="196 55"
+        strokeDashoffset="0"
+      />
+    </svg>
+  )
+}
+
 export function LoadingState() {
+  const [step, setStep] = useState(0)
+  const [fade, setFade] = useState(true)
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false)
+      fadeTimerRef.current = setTimeout(() => {
+        setStep((s) => (s + 1) % STEPS.length)
+        setFade(true)
+      }, 200)
+    }, 1800)
+    return () => {
+      clearInterval(interval)
+      if (fadeTimerRef.current !== null) clearTimeout(fadeTimerRef.current)
+    }
+  }, [])
+
   return (
     <div
       role="status"
       aria-live="polite"
-      aria-label="Evaluating"
-      className="space-y-4"
+      aria-label="Evaluating your idea"
+      className="flex min-h-[280px] flex-col items-center justify-center gap-5 rounded-xl border border-neutral-200 bg-white px-8 py-12 shadow-sm dark:border-surface-border dark:bg-surface-1"
     >
-      {/* Verdict card skeleton */}
-      <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm dark:border-surface-border dark:bg-surface-1">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="h-16 w-16 animate-pulse rounded-xl bg-neutral-200 dark:bg-surface-2" />
-            <div className="h-14 w-28 animate-pulse rounded-lg bg-neutral-200 dark:bg-surface-2" />
-          </div>
-          <div className="h-10 w-14 animate-pulse rounded-lg bg-neutral-200 dark:bg-surface-2" />
-        </div>
-        <div className="mt-4 flex gap-3">
-          <div className="h-3 w-28 animate-pulse rounded bg-neutral-200 dark:bg-surface-2" />
-          <div className="h-3 w-36 animate-pulse rounded bg-neutral-200 dark:bg-surface-2" />
-        </div>
-        <div className="mt-5 space-y-2 border-t border-neutral-100 pt-5 dark:border-surface-border">
-          <div className="h-3 w-full animate-pulse rounded bg-neutral-100 dark:bg-surface-1" />
-          <div className="h-3 w-5/6 animate-pulse rounded bg-neutral-100 dark:bg-surface-1" />
-          <div className="h-3 w-4/6 animate-pulse rounded bg-neutral-100 dark:bg-surface-1" />
-        </div>
-      </div>
+      <EvalSpinner />
 
-      {/* Scorecard skeleton */}
-      <div className="rounded-xl border border-neutral-200 bg-white px-5 py-4 shadow-sm dark:border-surface-border dark:bg-surface-1">
-        <div className="mb-3 h-3 w-16 animate-pulse rounded bg-neutral-200 dark:bg-surface-2" />
-        <div className="space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="h-3 w-36 animate-pulse rounded bg-neutral-200 dark:bg-surface-2" />
-              <div className="h-1 flex-1 animate-pulse rounded-full bg-neutral-100 dark:bg-surface-1" />
-              <div className="h-3 w-6 animate-pulse rounded bg-neutral-200 dark:bg-surface-2" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <p className="text-[15px] font-semibold text-neutral-800 dark:text-neutral-200">
+        Evaluating your idea&hellip;
+      </p>
 
-      <p className="text-xs text-neutral-500 dark:text-neutral-600">
-        Scoring dimensions and weighting evidence.
+      <p
+        aria-hidden
+        className="text-sm text-neutral-500 transition-opacity duration-200 dark:text-neutral-500"
+        style={{ opacity: fade ? 1 : 0 }}
+      >
+        {STEPS[step]}
       </p>
     </div>
   )
