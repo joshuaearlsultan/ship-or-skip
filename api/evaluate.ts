@@ -16,6 +16,7 @@ import {
 } from "./schema";
 import { RUBRICS } from "./rubrics";
 import { loadPrompt } from "./prompts";
+import { resolveMockResult } from "../src/data/examples";
 
 // ---------------------------------------------------------------------------
 // Anthropic client (lazy — fails at request time if key is missing, not import)
@@ -279,6 +280,11 @@ export async function handleEvaluate(
     };
   }
   const req = parsed.data;
+
+  // Mock mode — bypasses Anthropic entirely when USE_MOCK_EVALUATIONS != "false"
+  if (process.env.USE_MOCK_EVALUATIONS !== "false") {
+    return { ok: true, data: resolveMockResult(req.mode, req.idea) };
+  }
 
   // 2. Rate limit
   const rateLimitError = checkRateLimit(ip);

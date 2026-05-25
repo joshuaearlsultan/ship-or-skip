@@ -38,6 +38,7 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
     const next = examples[exampleIndex % examples.length]
     setIdea(next.idea)
     setExampleIndex((i) => i + 1)
+    onRun(next.idea.trim(), mode)
   }
 
   function handleSubmit(event: React.FormEvent) {
@@ -50,13 +51,15 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <ModeTabs value={mode} onChange={handleModeChange} disabled={busy} />
-        <p className="text-xs text-neutral-500">{descriptor.blurb}</p>
+        <p className="text-xs text-neutral-500 dark:text-neutral-600">
+          {descriptor.blurb}
+        </p>
       </div>
 
-      <div className="rounded-xl border border-neutral-200 bg-white shadow-sm">
+      <div className="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-surface-border dark:bg-surface-1">
         <label
           htmlFor="idea"
-          className="block px-4 pt-4 text-sm font-medium text-neutral-700"
+          className="block px-4 pt-4 text-sm font-medium text-neutral-700 dark:text-neutral-400"
         >
           {descriptor.inputLabel}
         </label>
@@ -68,15 +71,34 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
           placeholder={descriptor.placeholder}
           rows={5}
           disabled={busy}
-          className="block w-full resize-y border-0 bg-transparent px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:outline-none disabled:opacity-60"
+          className="block w-full resize-y border-0 bg-transparent px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:outline-none disabled:opacity-60 dark:text-neutral-100 dark:placeholder:text-neutral-600"
         />
-        <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-2.5 text-xs text-neutral-500">
-          <span>
-            {trimmed.length === 0
-              ? 'Describe the idea in plain language.'
-              : `${trimmed.length} characters`}
+        <div className="flex items-center justify-between border-t border-neutral-100 px-4 py-2.5 text-xs text-neutral-500 dark:border-surface-border dark:text-neutral-600">
+          {trimmed.length === 0 ? (
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-[11px] text-neutral-400 dark:text-neutral-600">
+                Include:
+              </span>
+              {[
+                'User problem',
+                'Target user',
+                'Assumptions',
+                'Expected outcome',
+              ].map((hint) => (
+                <span
+                  key={hint}
+                  className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] text-neutral-500 dark:bg-surface-2 dark:text-neutral-500"
+                >
+                  {hint}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span />
+          )}
+          <span className="ml-3 shrink-0" aria-hidden>
+            {remaining} left
           </span>
-          <span aria-hidden>{remaining}</span>
         </div>
       </div>
 
@@ -84,7 +106,7 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
         <button
           type="submit"
           disabled={!canRun}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-300"
+          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white dark:disabled:bg-surface-2 dark:disabled:text-neutral-600"
         >
           {busy ? 'Running…' : 'Run Ship or Skip'}
         </button>
@@ -92,7 +114,7 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
           type="button"
           onClick={handleTryExample}
           disabled={busy || examples.length === 0}
-          className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 disabled:cursor-not-allowed disabled:opacity-50 dark:border-surface-border dark:bg-surface-1 dark:text-neutral-400 dark:hover:bg-surface-2"
         >
           Try Example
         </button>

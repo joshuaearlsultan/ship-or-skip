@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
+/* Class-based dark mode: add class="dark" to <html> */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
+  /* Verdict: Ship */
   --color-verdict-ship: oklch(0.62 0.13 155);
   --color-verdict-ship-soft: oklch(0.95 0.04 155);
   --color-verdict-ship-ring: oklch(0.85 0.07 155);
+  --color-verdict-ship-vivid: oklch(0.76 0.16 155);
+  --color-verdict-ship-dark-bg: oklch(0.15 0.04 155);
+  --color-verdict-ship-dark-ring: oklch(0.27 0.09 155);
 
+  /* Verdict: Refine */
   --color-verdict-refine: oklch(0.70 0.13 75);
   --color-verdict-refine-soft: oklch(0.96 0.05 90);
   --color-verdict-refine-ring: oklch(0.86 0.09 80);
+  --color-verdict-refine-vivid: oklch(0.83 0.15 80);
+  --color-verdict-refine-dark-bg: oklch(0.15 0.04 75);
+  --color-verdict-refine-dark-ring: oklch(0.27 0.09 75);
 
+  /* Verdict: Skip */
   --color-verdict-skip: oklch(0.62 0.16 25);
   --color-verdict-skip-soft: oklch(0.96 0.03 25);
   --color-verdict-skip-ring: oklch(0.86 0.07 25);
+  --color-verdict-skip-vivid: oklch(0.76 0.18 25);
+  --color-verdict-skip-dark-bg: oklch(0.15 0.04 25);
+  --color-verdict-skip-dark-ring: oklch(0.27 0.09 25);
 
+  /* Score bands */
   --color-band-strong: oklch(0.62 0.13 155);
   --color-band-reasonable: oklch(0.65 0.10 200);
   --color-band-mixed: oklch(0.70 0.08 90);
   --color-band-weak: oklch(0.68 0.12 50);
   --color-band-counter: oklch(0.62 0.16 25);
 
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, sans-serif;
+  /* Deep charcoal surface system — dark-mode primary
+     Uses oklch hue 250 (blue-gray) for depth without pure black.
+     surface-0  page background  (darkest)
+     surface-1  card background
+     surface-2  elevated / hover
+     surface-border   subtle separator
+     surface-border-bright  interactive / focus ring */
+  --color-surface-0: oklch(0.10 0.008 250);
+  --color-surface-1: oklch(0.13 0.008 250);
+  --color-surface-2: oklch(0.18 0.008 250);
+  --color-surface-border: oklch(0.22 0.008 250);
+  --color-surface-border-bright: oklch(0.32 0.008 250);
+
+  /* Typography: Inter first, system stack fallback */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 html,
@@ -36,4 +66,9 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+.dark body {
+  background: var(--color-surface-0);
+  color: var(--color-neutral-100);
 }

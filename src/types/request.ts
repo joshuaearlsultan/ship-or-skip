@@ -21,7 +21,7 @@ export const MODE_DESCRIPTORS: ModeDescriptor[] = [
     inputLabel: 'Feature Idea',
     placeholder:
       'Describe a feature idea you are considering building. Include the user problem if you know it.',
-    blurb: 'Evaluate a specific feature before scoping work.',
+    blurb: 'Is this new capability worth building?',
   },
   {
     id: 'change',
@@ -29,7 +29,7 @@ export const MODE_DESCRIPTORS: ModeDescriptor[] = [
     inputLabel: 'Product Change',
     placeholder:
       'Describe a change to existing behavior — removal, redesign, default change, or expansion.',
-    blurb: 'Evaluate a modification to existing functionality.',
+    blurb: 'Is this modification an improvement or a regression risk?',
   },
   {
     id: 'concept',
@@ -37,6 +37,6 @@ export const MODE_DESCRIPTORS: ModeDescriptor[] = [
     inputLabel: 'Concept',
     placeholder:
       'Describe a strategic direction, positioning shift, or broader product hypothesis.',
-    blurb: 'Evaluate a direction before committing the roadmap.',
+    blurb: 'Is this direction worth committing resources to?',
   },
 ]

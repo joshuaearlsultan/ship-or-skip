@@ -1,0 +1,35 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!--
+    Ship or Skip — master mark
+    Two-tone flat origami boat. Four shapes.
+
+    Shape 1 — Left fold panel    (shadow-facing, darkest)
+    Shape 2 — Right fold panel   (light-facing, medium)
+    Shape 3 — Hull               (boat body, darkest)
+    Shape 4 — Center crease      (paper fold indicator)
+
+    Coordinate key:
+      Left peak:   (9, 4)      ← 7 units from center axis x=16
+      Right peak:  (23, 4)     ← 7 units from center axis x=16
+      Fold valley: (16, 14)    ← the evaluation moment, unchanged
+      Hull top:    y=24        (x=5 … x=27, 11 units from center each side)
+      Hull base:   y=29        (x=6 … x=26, 10 units from center each side)
+
+    Geometry change from previous version:
+      Outer fold width reduced 12.5% (peaks: 8→7 units; hull corners: 13→11 units).
+      Center valley and crease unchanged. Taper preserved (1 unit per side).
+  -->
+
+  <!-- Left fold panel — shadow side -->
+  <polygon points="5,24 9,4 16,14 16,24" fill="#1E293B"/>
+
+  <!-- Right fold panel — light side -->
+  <polygon points="27,24 23,4 16,14 16,24" fill="#64748B"/>
+
+  <!-- Hull -->
+  <polygon points="5,24 27,24 26,29 6,29" fill="#0F172A"/>
+
+  <!-- Center crease — defines the paper fold -->
+  <line x1="16" y1="14" x2="16" y2="24"
+        stroke="#0F172A" stroke-width="0.75" stroke-linecap="round"/>
+</svg>
