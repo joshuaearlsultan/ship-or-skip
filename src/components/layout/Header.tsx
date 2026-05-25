@@ -1,15 +1,29 @@
 import markUrl from '../../assets/mark.svg'
+import type { EvalMode } from '../../hooks/useEvaluation'
 
 interface HeaderProps {
   dark: boolean
   toggleDark: () => void
+  evalMode: EvalMode
+  onEvalModeChange: (mode: EvalMode) => void
 }
 
-export function Header({ dark, toggleDark }: HeaderProps) {
+export function Header({ dark, toggleDark, evalMode, onEvalModeChange }: HeaderProps) {
+  function handleModeBadgeClick() {
+    if (evalMode === 'mock') {
+      const confirmed = window.confirm(
+        'Live Claude evaluations will consume Anthropic API credits.\n\nContinue?',
+      )
+      if (confirmed) onEvalModeChange('claude')
+    } else {
+      onEvalModeChange('mock')
+    }
+  }
+
   return (
     <header className="border-b border-neutral-200 bg-white dark:border-surface-border dark:bg-surface-0">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3.5">
-        {/* Brand — mark + wordmark only, no secondary copy */}
+        {/* Brand */}
         <div className="flex items-center gap-3">
           <img
             src={markUrl}
@@ -24,15 +38,39 @@ export function Header({ dark, toggleDark }: HeaderProps) {
           </span>
         </div>
 
-        {/* Theme toggle only — no marketing copy */}
-        <button
-          type="button"
-          onClick={toggleDark}
-          aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
-          className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:text-neutral-500 dark:hover:bg-surface-2 dark:hover:text-neutral-300"
-        >
-          {dark ? <SunIcon /> : <MoonIcon />}
-        </button>
+        {/* Right side controls */}
+        <div className="flex items-center gap-2">
+          {/* Eval mode badge — clickable toggle */}
+          <button
+            type="button"
+            onClick={handleModeBadgeClick}
+            title={
+              evalMode === 'mock'
+                ? 'Switch to live Claude evaluations'
+                : 'Switch back to mock mode'
+            }
+            className={[
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium',
+              'transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+              evalMode === 'mock'
+                ? 'bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-200 hover:bg-amber-100 focus-visible:ring-amber-400 dark:bg-amber-950 dark:text-amber-400 dark:ring-amber-800 dark:hover:bg-amber-900'
+                : 'bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-200 hover:bg-blue-100 focus-visible:ring-blue-400 dark:bg-blue-950 dark:text-blue-400 dark:ring-blue-800 dark:hover:bg-blue-900',
+            ].join(' ')}
+          >
+            <span aria-hidden>{evalMode === 'mock' ? '🧪' : '🤖'}</span>
+            {evalMode === 'mock' ? 'Mock Mode' : 'Claude Mode'}
+          </button>
+
+          {/* Theme toggle */}
+          <button
+            type="button"
+            onClick={toggleDark}
+            aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 dark:text-neutral-500 dark:hover:bg-surface-2 dark:hover:text-neutral-300"
+          >
+            {dark ? <SunIcon /> : <MoonIcon />}
+          </button>
+        </div>
       </div>
     </header>
   )

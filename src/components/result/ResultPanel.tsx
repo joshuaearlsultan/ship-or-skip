@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type {
   DecisionResult,
   EvaluationDimension,
@@ -24,7 +24,16 @@ export function ResultPanel({ state }: ResultPanelProps) {
   if (state.status === 'idle') return <EmptyState />
   if (state.status === 'loading') return <LoadingState />
   if (state.status === 'error') return <ErrorState message={state.error.message} />
-  return <ReadyState result={state.result} request={state.request} />
+  // Key on idea+mode so ReadyState remounts (resetting local toast) on each new evaluation
+  const resultKey = `${state.request.mode}:${state.request.idea}`
+  return (
+    <ReadyState
+      key={resultKey}
+      result={state.result}
+      request={state.request}
+      fromCache={state.fromCache}
+    />
+  )
 }
 
 function EmptyState() {
@@ -68,9 +77,11 @@ function ErrorState({ message }: { message: string }) {
 function ReadyState({
   result,
   request,
+  fromCache,
 }: {
   result: DecisionResult
   request: EvaluationRequest
+  fromCache: boolean
 }) {
   return (
     <div className="space-y-4">
@@ -81,7 +92,8 @@ function ReadyState({
       {result.refineRecommendation ? (
         <RefineSection recommendation={result.refineRecommendation} />
       ) : null}
-      <div className="flex justify-end pt-1">
+      <div className="flex items-center justify-between pt-1">
+        <CacheToast show={fromCache} />
         <CopyEvaluationButton
           result={result}
           idea={request.idea}
@@ -89,6 +101,35 @@ function ReadyState({
         />
       </div>
     </div>
+  )
+}
+
+// ─── Cache toast ──────────────────────────────────────────────────────────────
+
+function CacheToast({ show }: { show: boolean }) {
+  const [visible, setVisible] = useState(show)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (!show) return
+    setVisible(true)
+    timerRef.current = setTimeout(() => setVisible(false), 3000)
+    return () => {
+      if (timerRef.current !== null) clearTimeout(timerRef.current)
+    }
+  }, [show])
+
+  if (!visible) return <span /> // keeps flex layout stable
+
+  return (
+    <span
+      role="status"
+      aria-live="polite"
+      className="inline-flex items-center gap-1.5 rounded-full bg-neutral-100 px-2.5 py-1 text-[11px] font-medium text-neutral-500 dark:bg-surface-2 dark:text-neutral-400"
+    >
+      <span aria-hidden>⚡</span>
+      Served from cache
+    </span>
   )
 }
 
