@@ -11,8 +11,10 @@ import type {
   ScoreBand,
 } from '../../types/decision'
 import type { EvaluationState } from '../../hooks/useEvaluation'
+import type { EvaluationRequest } from '../../types/request'
 import { LoadingState } from '../feedback/LoadingState'
 import { DecisionCard } from './DecisionCard'
+import { CopyEvaluationButton } from './CopyEvaluationButton'
 
 interface ResultPanelProps {
   state: EvaluationState
@@ -22,7 +24,7 @@ export function ResultPanel({ state }: ResultPanelProps) {
   if (state.status === 'idle') return <EmptyState />
   if (state.status === 'loading') return <LoadingState />
   if (state.status === 'error') return <ErrorState message={state.error.message} />
-  return <ReadyState result={state.result} />
+  return <ReadyState result={state.result} request={state.request} />
 }
 
 function EmptyState() {
@@ -63,7 +65,13 @@ function ErrorState({ message }: { message: string }) {
   )
 }
 
-function ReadyState({ result }: { result: DecisionResult }) {
+function ReadyState({
+  result,
+  request,
+}: {
+  result: DecisionResult
+  request: EvaluationRequest
+}) {
   return (
     <div className="space-y-4">
       <DecisionCard result={result} />
@@ -73,6 +81,13 @@ function ReadyState({ result }: { result: DecisionResult }) {
       {result.refineRecommendation ? (
         <RefineSection recommendation={result.refineRecommendation} />
       ) : null}
+      <div className="flex justify-end pt-1">
+        <CopyEvaluationButton
+          result={result}
+          idea={request.idea}
+          mode={request.mode}
+        />
+      </div>
     </div>
   )
 }
