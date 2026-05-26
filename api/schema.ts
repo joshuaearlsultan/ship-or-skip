@@ -8,7 +8,7 @@ const DimensionSignalSchema = z.object({
 const RawDimensionSchema = z.object({
   id: z.string().regex(/^[a-z][a-z0-9-]+$/, 'Dimension id must be kebab-case'),
   score: z.number().int().min(0).max(100),
-  rationale: z.string().max(220),
+  rationale: z.string().max(300),
   signals: z.array(DimensionSignalSchema).min(1).max(4),
 })
 
@@ -21,7 +21,7 @@ const RiskSchema = z.object({
 
 const MissingValidationSchema = z.object({
   question: z.string().max(160),
-  whyItMatters: z.string().max(140),
+  whyItMatters: z.string().max(200),
   howToCheck: z.string().max(180),
   linkedDimension: z.string(),
 })
@@ -36,7 +36,7 @@ const RefineRecommendationSchema = z.object({
   whatsWrong: z.array(z.string().max(140)).min(1).max(4),
   improvements: z.array(ImprovementSchema).min(1).max(4),
   smallerExperiment: z.string().max(220).nullable(),
-  reEvaluateWhen: z.string().max(180),
+  reEvaluateWhen: z.string().max(240),
 })
 
 export const ToolOutputSchema = z.object({

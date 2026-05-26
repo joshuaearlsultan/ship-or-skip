@@ -86,8 +86,11 @@ The root object has these fields:
   prompt), each containing:
   - `id` — the stable dimension id from the rubric.
   - `score` — integer 0–100.
-  - `rationale` — ≤ 220 characters.
+  - `rationale` — ≤ 300 characters.
   - `signals` — 1–4 objects, each `{ "type": "positive"|"negative"|"unknown", "statement": "≤140 chars" }`.
+    Signal `type` must be exactly one of those three values. `counter` is a
+    verdict-band label used by the scoring formula — it is **never** a valid
+    signal type. Use `"negative"` for unfavorable signals.
 - `risks` — array of 2–5 objects, each containing:
   - `id` — short unique slug, e.g. `"risk-no-rollback-plan"`.
   - `severity` — `"high"`, `"medium"`, or `"low"`.

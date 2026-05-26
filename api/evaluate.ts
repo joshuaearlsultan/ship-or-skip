@@ -523,13 +523,33 @@ export async function handleEvaluate(
   if (!validated.success) {
     // schema_violation #2 — tool input present but Zod rejects its shape
     process.stderr.write("[evaluate] ✗ SCHEMA_VIOLATION #2 — Zod validation failed\n");
-    // Log each Zod issue with its path so the failing field is unambiguous
+    // Log each Zod issue with its path AND the actual value at that path
+    const getValueAtPath = (obj: unknown, path: (string | number)[]): unknown => {
+      let cur: unknown = obj;
+      for (const key of path) {
+        if (cur == null || typeof cur !== "object") return undefined;
+        cur = (cur as Record<string | number, unknown>)[key];
+      }
+      return cur;
+    };
     validated.error.issues.forEach((issue, i) => {
-      process.stderr.write(
-        `[evaluate]   issue[${i}] path=${JSON.stringify(issue.path)} code=${issue.code} message="${issue.message}"\n`
-      );
+      const val = getValueAtPath(toolInput, issue.path as (string | number)[]);
+      const valStr = typeof val === "string"
+        ? `"${val.slice(0, 300)}"${val.length > 300 ? `… (+${val.length - 300} chars, total=${val.length})` : ` (length=${val.length})`}`
+        : JSON.stringify(val)?.slice(0, 200);
+      // For parent-context: one level up
+      const parentPath = (issue.path as (string | number)[]).slice(0, -1);
+      const parentVal = getValueAtPath(toolInput, parentPath);
+      process.stderr.write(`\n[evaluate]   ── issue[${i}] ─────────────────────────────────────\n`);
+      process.stderr.write(`[evaluate]     path    : ${JSON.stringify(issue.path)}\n`);
+      process.stderr.write(`[evaluate]     code    : ${issue.code}\n`);
+      process.stderr.write(`[evaluate]     message : ${issue.message}\n`);
+      process.stderr.write(`[evaluate]     value   : ${valStr}\n`);
+      if (parentPath.length > 0) {
+        process.stderr.write(`[evaluate]     parent  : ${JSON.stringify(parentVal)?.slice(0, 400)}\n`);
+      }
     });
-    process.stderr.write("[evaluate]   toolInput (full): " + JSON.stringify(toolInput, null, 2) + "\n");
+    process.stderr.write("\n[evaluate]   toolInput (full):\n" + JSON.stringify(toolInput, null, 2) + "\n");
     return {
       ok: false,
       error: {
