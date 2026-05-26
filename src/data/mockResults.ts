@@ -336,6 +336,185 @@ export const refineConceptMock: DecisionResult = {
   },
 }
 
+export const refineChangeMock: DecisionResult = {
+  verdict: 'refine',
+  confidence: 65,
+  mode: 'change',
+  summary:
+    'Usage data justifies the removal but the risk to the active minority is unquantified. No migration or archival path described.',
+  scorecard: {
+    overallScore: 57,
+    spread: 9.5,
+    evidenceQuality: 73,
+    strongest: 'implementation-complexity',
+    weakest: 'reversibility',
+    dimensions: [
+      {
+        id: 'change-justification',
+        label: 'Change Justification',
+        weight: 0.18,
+        score: 65,
+        band: 'reasonable',
+        rationale:
+          'Sub-2% engagement is a meaningful signal; stated data-layer complexity is a real cost with some evidence.',
+        signals: [
+          { type: 'positive', statement: 'Usage below 2% cited from telemetry' },
+          { type: 'positive', statement: 'Data layer complexity reduction is concrete' },
+        ],
+      },
+      {
+        id: 'impact-scope',
+        label: 'Impact Scope',
+        weight: 0.15,
+        score: 58,
+        band: 'mixed',
+        rationale:
+          'Feature is visible to all dashboard users on removal; active users face a harder break.',
+        signals: [
+          { type: 'negative', statement: 'Removal affects all dashboard users immediately' },
+          { type: 'unknown', statement: 'Absolute count of users with existing comments not stated' },
+        ],
+      },
+      {
+        id: 'existing-user-risk',
+        label: 'Existing User Risk',
+        weight: 0.18,
+        score: 45,
+        band: 'mixed',
+        rationale:
+          'The 2% who do use comments have built workflows around them; removal without notice causes real friction.',
+        signals: [
+          { type: 'negative', statement: '2% of active users have data at risk of loss' },
+          { type: 'unknown', statement: 'Whether those users have documented workarounds is unknown' },
+        ],
+      },
+      {
+        id: 'reversibility',
+        label: 'Reversibility',
+        weight: 0.12,
+        score: 42,
+        band: 'mixed',
+        rationale:
+          'Comment data deletion is permanent. Restoring the feature requires schema and UI reconstruction.',
+        signals: [
+          { type: 'negative', statement: 'Deleted comment data cannot be recovered' },
+          { type: 'negative', statement: 'Re-adding the feature requires a full rebuild' },
+        ],
+      },
+      {
+        id: 'improvement-magnitude',
+        label: 'Improvement Magnitude',
+        weight: 0.15,
+        score: 62,
+        band: 'reasonable',
+        rationale:
+          'Removing the feature simplifies the data model and reduces test surface in a measurable way.',
+        signals: [
+          { type: 'positive', statement: 'Data layer simplification is concrete and measurable' },
+        ],
+      },
+      {
+        id: 'migration-cost',
+        label: 'Migration Cost',
+        weight: 0.1,
+        score: 55,
+        band: 'mixed',
+        rationale:
+          'Existing comment data must be archived or exported before removal. No plan is described.',
+        signals: [
+          { type: 'unknown', statement: 'Comment data export or archival path not defined' },
+        ],
+      },
+      {
+        id: 'implementation-complexity',
+        label: 'Implementation Complexity',
+        weight: 0.12,
+        score: 70,
+        band: 'reasonable',
+        rationale:
+          'Removal is lower complexity than the original build; main effort is data cleanup and deprecation notice.',
+        signals: [
+          { type: 'positive', statement: 'Removal generally lower effort than original feature build' },
+        ],
+      },
+    ],
+  },
+  risks: [
+    {
+      id: 'active-user-data-loss',
+      severity: 'high',
+      statement: 'Users with existing comments lose data permanently without a migration path.',
+      linkedDimension: 'existing-user-risk',
+    },
+    {
+      id: 'irreversible-deletion',
+      severity: 'medium',
+      statement: 'No rollback once comment data is dropped from the schema.',
+      linkedDimension: 'reversibility',
+    },
+    {
+      id: 'scope-undercount',
+      severity: 'low',
+      statement: '2% of a large user base may represent a significant absolute user count.',
+      linkedDimension: 'impact-scope',
+    },
+  ],
+  missingValidation: [
+    {
+      question: 'How many users have at least one existing comment?',
+      whyItMatters:
+        'Absolute count determines whether a formal migration path is required before deletion.',
+      howToCheck:
+        'Query the comment table for distinct user_ids with at least one row.',
+      linkedDimension: 'existing-user-risk',
+    },
+    {
+      question: 'Is there a comment data export or archival plan?',
+      whyItMatters:
+        'Permanent deletion without user notice is a trust and compliance risk.',
+      howToCheck:
+        'Define a CSV export flow or read-only archive before scheduling removal.',
+      linkedDimension: 'migration-cost',
+    },
+  ],
+  refineRecommendation: {
+    whatsWrong: [
+      'No migration or archival plan exists for existing comment data.',
+      'Impact on the active 2% is unquantified in absolute terms.',
+      'Reversibility is low with no staged removal path described.',
+    ],
+    improvements: [
+      {
+        action:
+          'Define a data export path for users with existing comments before any schema change.',
+        targetDimension: 'migration-cost',
+        expectedLift: 'large',
+      },
+      {
+        action:
+          'Query absolute count of affected users to determine deprecation notice requirements.',
+        targetDimension: 'existing-user-risk',
+        expectedLift: 'moderate',
+      },
+      {
+        action:
+          'Stage removal: hide the UI first, monitor support tickets for 30 days, delete data only after.',
+        targetDimension: 'reversibility',
+        expectedLift: 'moderate',
+      },
+    ],
+    smallerExperiment:
+      'Hide the comments UI behind a feature flag for 30 days and measure support ticket volume before committing to data deletion.',
+    reEvaluateWhen:
+      'A data export path is defined and the absolute count of affected users is confirmed below the threshold requiring proactive migration support.',
+  },
+  meta: {
+    model: 'mock@m1',
+    latencyMs: 1050,
+    promptVersion: 'change@2026-05-27',
+  },
+}
+
 export const skipFeatureMock: DecisionResult = {
   verdict: 'skip',
   confidence: 79,

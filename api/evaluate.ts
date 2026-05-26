@@ -1,10 +1,3 @@
-import Anthropic, {
-  APIError,
-  AuthenticationError,
-  RateLimitError,
-  APIConnectionError,
-  BadRequestError,
-} from "@anthropic-ai/sdk";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type {
   DecisionResult,
@@ -12,7 +5,7 @@ import type {
   ScoreBand,
   Verdict,
 } from "../src/types/decision";
-import type { ApiError, ApiResponse } from "../src/types/api";
+import type { ApiResponse } from "../src/types/api";
 import type { IdeaMode } from "../src/types/request";
 import {
   EvaluationRequestSchema,
@@ -22,28 +15,6 @@ import {
 import { RUBRICS } from "./rubrics";
 import { loadPrompt } from "./prompts";
 import { resolveMockResult } from "../src/data/examples";
-
-// ---------------------------------------------------------------------------
-// Anthropic client (lazy — fails at request time if key is missing, not import)
-// ---------------------------------------------------------------------------
-
-let _client: Anthropic | null = null;
-
-function getClient(): Anthropic {
-  if (!_client) {
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) {
-      throw new HandlerError(
-        "internal",
-        "ANTHROPIC_API_KEY is not configured.",
-      );
-    }
-    const baseURL = process.env.ANTHROPIC_BASE_URL;
-    console.log("[evaluate] SDK base URL :", baseURL ?? "(default — api.anthropic.com)");
-    _client = new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) });
-  }
-  return _client;
-}
 
 // ---------------------------------------------------------------------------
 // Simple in-memory rate limiter (10 req / 5 min per IP)
@@ -266,37 +237,6 @@ class HandlerError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Anthropic error parser — maps SDK errors to semantic ApiError codes
-// ---------------------------------------------------------------------------
-
-function parseAnthropicError(err: unknown): ApiError {
-  if (err instanceof AuthenticationError) {
-    return { code: "invalid_api_key", message: "API key is invalid or has expired." };
-  }
-  if (err instanceof RateLimitError) {
-    return { code: "rate_limited", message: "Anthropic rate limit exceeded. Try again shortly." };
-  }
-  if (err instanceof APIConnectionError) {
-    return { code: "network_error", message: "Could not connect to the Anthropic API." };
-  }
-  if (err instanceof BadRequestError) {
-    // Inspect the structured error body for credit / billing issues
-    const body = err.error as { error?: { type?: string; message?: string } } | null | undefined;
-    const innerMsg = body?.error?.message ?? err.message;
-    if (/credit|billing|balance/i.test(innerMsg)) {
-      return { code: "insufficient_credits", message: innerMsg };
-    }
-    return { code: "upstream_error", message: innerMsg };
-  }
-  if (err instanceof APIError) {
-    const message = err.message || "Upstream API error.";
-    return { code: "upstream_error", message };
-  }
-  const message = err instanceof Error ? err.message : "Upstream API error.";
-  return { code: "upstream_error", message };
-}
-
-// ---------------------------------------------------------------------------
 // JSON extraction — handles code fences, preamble text, and suffix prose
 // ---------------------------------------------------------------------------
 
@@ -377,7 +317,8 @@ export async function handleEvaluate(
   // ─────────────────────────────────────────────────────────────────────────
   const startMs = Date.now();
   const modelId = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-5";
-  const gatewayEndpoint = `${process.env.ANTHROPIC_BASE_URL}/v1/chat/completions`;
+  const baseUrl = process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com";
+  const gatewayEndpoint = `${baseUrl}/v1/chat/completions`;
 
   // Mode label used in the user turn so the model never has to infer it.
   const modeLabel: Record<IdeaMode, string> = {

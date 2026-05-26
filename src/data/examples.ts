@@ -1,6 +1,7 @@
 import type { IdeaMode } from '../types/request'
 import type { DecisionResult } from '../types/decision'
 import {
+  refineChangeMock,
   refineConceptMock,
   shipFeatureMock,
   skipFeatureMock,
@@ -71,7 +72,7 @@ export function resolveMockResult(
   }
 
   if (mode === 'change') {
-    return withMode(refineConceptMock, mode)
+    return withMode(refineChangeMock, mode)
   }
 
   return withMode(skipFeatureMock, mode)
