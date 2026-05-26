@@ -16,7 +16,6 @@ import type { ApiError, ApiResponse } from "../src/types/api";
 import type { IdeaMode } from "../src/types/request";
 import {
   EvaluationRequestSchema,
-  SUBMIT_DECISION_TOOL,
   ToolOutputSchema,
   type ToolOutput,
 } from "./schema";
@@ -39,7 +38,9 @@ function getClient(): Anthropic {
         "ANTHROPIC_API_KEY is not configured.",
       );
     }
-    _client = new Anthropic({ apiKey });
+    const baseURL = process.env.ANTHROPIC_BASE_URL;
+    console.log("[evaluate] SDK base URL :", baseURL ?? "(default — api.anthropic.com)");
+    _client = new Anthropic({ apiKey, ...(baseURL ? { baseURL } : {}) });
   }
   return _client;
 }
@@ -242,7 +243,7 @@ function assembleResult(
     missingValidation: output.missingValidation,
     refineRecommendation,
     meta: {
-      model: "claude-opus-4-7",
+      model: process.env.ANTHROPIC_MODEL ?? "claude-opus-4-5",
       latencyMs,
       promptVersion,
     },
@@ -296,6 +297,31 @@ function parseAnthropicError(err: unknown): ApiError {
 }
 
 // ---------------------------------------------------------------------------
+// JSON extraction — handles code fences, preamble text, and suffix prose
+// ---------------------------------------------------------------------------
+
+function extractJSON(text: string): unknown {
+  const attempts: string[] = [];
+
+  // 1. Whole text as-is (model returned raw JSON with no wrapper)
+  attempts.push(text.trim());
+
+  // 2. Contents of a ```json … ``` or ``` … ``` fence
+  const fenceMatch = text.match(/```(?:json)?[ \t]*\r?\n?([\s\S]*?)```/);
+  if (fenceMatch?.[1]) attempts.push(fenceMatch[1].trim());
+
+  // 3. First '{' to last '}' — strips leading prose and trailing text
+  const first = text.indexOf('{');
+  const last  = text.lastIndexOf('}');
+  if (first !== -1 && last > first) attempts.push(text.slice(first, last + 1));
+
+  for (const candidate of attempts) {
+    try { return JSON.parse(candidate); } catch { /* try next strategy */ }
+  }
+  return null;
+}
+
+// ---------------------------------------------------------------------------
 // Core evaluation logic
 // ---------------------------------------------------------------------------
 
@@ -342,47 +368,168 @@ export async function handleEvaluate(
   // 4. Load prompt
   const { systemPrompt, promptVersion } = loadPrompt(req.mode);
 
-  // 5. Call Claude
-  const client = getClient();
+  // 5. Call model via gateway /v1/chat/completions (OpenAI-compatible)
+  // ─────────────────────────────────────────────────────────────────────────
+  // The gateway's /v1/messages endpoint silently strips the Anthropic-native
+  // top-level `system` field — confirmed by request-log token counts and a
+  // sentinel test.  /v1/chat/completions preserves role:"system" messages
+  // end-to-end.  No SDK: plain fetch so the request format is explicit.
+  // ─────────────────────────────────────────────────────────────────────────
   const startMs = Date.now();
+  const modelId = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-5";
+  const gatewayEndpoint = `${process.env.ANTHROPIC_BASE_URL}/v1/chat/completions`;
+
+  // Mode label used in the user turn so the model never has to infer it.
+  const modeLabel: Record<IdeaMode, string> = {
+    feature: "feature idea",
+    change: "product change",
+    concept: "concept",
+  };
+
+  const userMessage =
+    `Mode: ${req.mode}\n\n` +
+    `Evaluate this ${modeLabel[req.mode]} using the Ship or Skip framework. ` +
+    `Score it against every dimension in the rubric. ` +
+    `Output only valid JSON matching the schema.\n\n` +
+    `Idea:\n${req.idea}`;
+
+  // System prompt is the FIRST message; user content follows.
+  const requestPayload = {
+    model: modelId,
+    max_tokens: 4096,
+    messages: [
+      { role: "system" as const, content: systemPrompt },
+      { role: "user"   as const, content: userMessage  },
+    ],
+  };
+
+  // ── Diagnostic: endpoint + full outbound payload ─────────────────────────
+  console.log("[evaluate] ── REQUEST ──────────────────────────────────────");
+  console.log("[evaluate] endpoint       :", gatewayEndpoint);
+  console.log("[evaluate] model          :", requestPayload.model);
+  console.log("[evaluate] max_tokens     :", requestPayload.max_tokens);
+  console.log("[evaluate] prompt version :", promptVersion);
+  console.log("[evaluate] messages count :", requestPayload.messages.length);
+  console.log("[evaluate] ── OUTBOUND PAYLOAD (FULL) ─────────────────────");
+  console.log(JSON.stringify(requestPayload, null, 2));
+  console.log("[evaluate] ── END OUTBOUND PAYLOAD ────────────────────────");
 
   let toolInput: unknown;
   try {
-    const message = await client.messages.create({
-      model: "claude-opus-4-7",
-      max_tokens: 4096,
-      system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: req.idea,
-        },
-      ],
-      tools: [SUBMIT_DECISION_TOOL],
-      tool_choice: { type: "tool", name: "submit_decision" },
+    const httpResponse = await fetch(gatewayEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+      },
+      body: JSON.stringify(requestPayload),
     });
 
-    const toolUseBlock = message.content.find((b) => b.type === "tool_use");
-    if (!toolUseBlock || toolUseBlock.type !== "tool_use") {
+    const rawBody = await httpResponse.text();
+
+    // ── Diagnostic: raw response payload ─────────────────────────────────
+    console.log("[evaluate] ── RAW RESPONSE PAYLOAD ────────────────────────");
+    console.log(rawBody);
+    console.log("[evaluate] ── END RAW RESPONSE PAYLOAD ────────────────────");
+    console.log("[evaluate] HTTP status   :", httpResponse.status, httpResponse.statusText);
+
+    if (!httpResponse.ok) {
+      process.stderr.write("[evaluate] ✗ Gateway HTTP error\n");
+      process.stderr.write("[evaluate]   status : " + httpResponse.status + "\n");
+      process.stderr.write("[evaluate]   body   : " + rawBody.slice(0, 400) + "\n");
       return {
         ok: false,
         error: {
-          code: "schema_violation",
-          message: "Model did not call the required tool.",
+          code: "upstream_error",
+          message: `Gateway returned ${httpResponse.status}: ${rawBody.slice(0, 200)}`,
         },
       };
     }
-    toolInput = toolUseBlock.input;
+
+    // ── Parse OpenAI-format response ──────────────────────────────────────
+    let responseData: { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
+    try {
+      responseData = JSON.parse(rawBody);
+    } catch {
+      process.stderr.write("[evaluate] ✗ Gateway response is not valid JSON\n");
+      return {
+        ok: false,
+        error: { code: "upstream_error", message: "Gateway returned non-JSON response." },
+      };
+    }
+
+    const rawText = responseData?.choices?.[0]?.message?.content ?? "";
+    const finishReason = responseData?.choices?.[0]?.finish_reason ?? "unknown";
+
+    console.log("[evaluate] finish_reason  :", finishReason);
+    console.log("[evaluate] raw text length:", rawText.length);
+
+    if (!rawText) {
+      process.stderr.write("[evaluate] ✗ No content in response choices\n");
+      process.stderr.write("[evaluate]   responseData: " + JSON.stringify(responseData) + "\n");
+      return {
+        ok: false,
+        error: { code: "schema_violation", message: "Model returned no text content." },
+      };
+    }
+
+    console.log("[evaluate] ── RAW MODEL OUTPUT (FULL) ──────────────────────────");
+    console.log(rawText);
+    console.log("[evaluate] ── END RAW MODEL OUTPUT ────────────────────────────");
+
+    // ── JSON extraction ────────────────────────────────────────────────────
+    toolInput = extractJSON(rawText);
+    if (toolInput === null) {
+      process.stderr.write("[evaluate] ✗ JSON extraction failed\n");
+      process.stderr.write("[evaluate]   raw (full): " + rawText + "\n");
+      return {
+        ok: false,
+        error: { code: "schema_violation", message: "Model did not return parseable JSON." },
+      };
+    }
+    console.log("[evaluate] ✓ JSON extracted, keys:", Object.keys(toolInput as Record<string, unknown>).join(", "));
   } catch (err) {
-    console.error("[evaluate] Anthropic API error:", err);
-    return { ok: false, error: parseAnthropicError(err) };
+    console.error("[evaluate] Fetch error:", err);
+    const msg = err instanceof Error ? err.message : "Unknown network error.";
+    return { ok: false, error: { code: "network_error", message: msg } };
   }
 
   const latencyMs = Date.now() - startMs;
 
   // 6. Validate tool output
+  console.log("[evaluate] ── ZOD VALIDATION ──────────────────────────────────");
+  // ── PRE-VALIDATION FIELD AUDIT ─────────────────────────────────────────────
+  // Logs the exact values the model returned for every top-level field so the
+  // root cause of any Zod failure is visible without reading a dense JSON dump.
+  {
+    const t = toolInput as Record<string, unknown>;
+    const sc = t["scorecard"] as Record<string, unknown> | null | undefined;
+    const dims = Array.isArray(sc?.["dimensions"]) ? (sc!["dimensions"] as unknown[]) : null;
+    const dimIds = dims?.map((d) => (d as Record<string, unknown>)["id"]).join(", ") ?? "MISSING";
+    process.stderr.write("\n[evaluate] ── PRE-VALIDATION FIELD AUDIT ───────────────────\n");
+    process.stderr.write("[evaluate]   top-level keys     : " + JSON.stringify(Object.keys(t)) + "\n");
+    process.stderr.write("[evaluate]   mode               : " + JSON.stringify(t["mode"]) + "\n");
+    process.stderr.write("[evaluate]   typeof mode        : " + typeof t["mode"] + "\n");
+    process.stderr.write("[evaluate]   summary (80)       : " + JSON.stringify(String(t["summary"] ?? "").slice(0, 80)) + "\n");
+    process.stderr.write("[evaluate]   scorecard keys     : " + JSON.stringify(Object.keys(sc ?? {})) + "\n");
+    process.stderr.write("[evaluate]   dimension count    : " + (dims?.length ?? "MISSING") + "\n");
+    process.stderr.write("[evaluate]   dimension ids      : " + dimIds + "\n");
+    process.stderr.write("[evaluate]   risks count        : " + (Array.isArray(t["risks"]) ? (t["risks"] as unknown[]).length : "MISSING/wrong-type") + "\n");
+    process.stderr.write("[evaluate]   missingValidation  : " + (Array.isArray(t["missingValidation"]) ? (t["missingValidation"] as unknown[]).length : "MISSING/wrong-type") + "\n");
+    process.stderr.write("[evaluate]   refineRec type     : " + (t["refineRecommendation"] === null ? "null" : typeof t["refineRecommendation"]) + "\n");
+    process.stderr.write("[evaluate] ─────────────────────────────────────────────────────\n\n");
+  }
   const validated = ToolOutputSchema.safeParse(toolInput);
   if (!validated.success) {
+    // schema_violation #2 — tool input present but Zod rejects its shape
+    process.stderr.write("[evaluate] ✗ SCHEMA_VIOLATION #2 — Zod validation failed\n");
+    // Log each Zod issue with its path so the failing field is unambiguous
+    validated.error.issues.forEach((issue, i) => {
+      process.stderr.write(
+        `[evaluate]   issue[${i}] path=${JSON.stringify(issue.path)} code=${issue.code} message="${issue.message}"\n`
+      );
+    });
+    process.stderr.write("[evaluate]   toolInput (full): " + JSON.stringify(toolInput, null, 2) + "\n");
     return {
       ok: false,
       error: {
@@ -391,9 +538,14 @@ export async function handleEvaluate(
       },
     };
   }
+  console.log("[evaluate] ✓ Zod validation passed");
 
   // 7. Tone lint
+  console.log("[evaluate] ── TONE LINT ─────────────────────────────────────────");
   if (!passesToneLint(validated.data)) {
+    // schema_violation #3 — banned phrase in output
+    process.stderr.write("[evaluate] ✗ SCHEMA_VIOLATION #3 — tone lint failed\n");
+    process.stderr.write("[evaluate]   summary: " + validated.data.summary + "\n");
     return {
       ok: false,
       error: {
@@ -402,6 +554,7 @@ export async function handleEvaluate(
       },
     };
   }
+  console.log("[evaluate] ✓ Tone lint passed");
 
   // 8. Assemble DecisionResult with all server-computed fields
   const result = assembleResult(validated.data, latencyMs, promptVersion);

@@ -159,3 +159,137 @@ Tag the appropriate dimension `weak` or `counter` when you see these:
   whether `refineRecommendation` is `null`.
 - Every `linkedDimension` value in `risks` and `missingValidation`
   must match one of the 7 dimension IDs above.
+
+---
+
+## Output Example
+
+The following is a complete, correctly structured response for
+`mode: change`. Every field name, every dimension `id`, and the
+overall object shape are canonical. Replace all values with content
+derived from the actual input. Do not add or remove fields.
+
+Note: this example scores **Refine** and therefore includes a
+populated `refineRecommendation` object. Set it to `null` for Ship
+or Skip verdicts.
+
+```json
+{
+  "mode": "change",
+  "summary": "Justification is internal. Existing user reliance is unmeasured and the change is partially irreversible.",
+  "scorecard": {
+    "dimensions": [
+      {
+        "id": "change-justification",
+        "score": 55,
+        "rationale": "A trigger is present but it is internal preference only. No external signal named.",
+        "signals": [
+          { "type": "negative", "statement": "Stated reason is team preference for a simpler data layer." },
+          { "type": "unknown",  "statement": "No external customer feedback or usage trend cited." }
+        ]
+      },
+      {
+        "id": "impact-scope",
+        "score": 60,
+        "rationale": "Affected segment described in aggregate only. No breakdown by user type or tier.",
+        "signals": [
+          { "type": "positive", "statement": "Feature usage is below 2% overall." },
+          { "type": "negative", "statement": "Identity of the 2% is unknown — could be power users or enterprise accounts." }
+        ]
+      },
+      {
+        "id": "existing-user-risk",
+        "score": 35,
+        "rationale": "User reliance is plausible but unmeasured. No mitigation plan is described.",
+        "signals": [
+          { "type": "negative", "statement": "No survey or outreach to current feature users has been done." },
+          { "type": "unknown",  "statement": "Whether enterprise accounts depend on this feature is not stated." }
+        ]
+      },
+      {
+        "id": "reversibility",
+        "score": 50,
+        "rationale": "UI removal is reversible. Any API surface that exposes this behavior is not.",
+        "signals": [
+          { "type": "positive", "statement": "No schema changes described." },
+          { "type": "unknown",  "statement": "Whether an API endpoint exposes this feature is not stated." }
+        ]
+      },
+      {
+        "id": "improvement-magnitude",
+        "score": 45,
+        "rationale": "Improvement is internal only. No user-facing benefit is described.",
+        "signals": [
+          { "type": "negative", "statement": "Benefit framed as reduced data layer complexity with no user-visible upside." }
+        ]
+      },
+      {
+        "id": "migration-cost",
+        "score": 60,
+        "rationale": "No active data migration required. Users who relied on the feature will lose it without notice.",
+        "signals": [
+          { "type": "positive", "statement": "No data migration required." },
+          { "type": "negative", "statement": "Affected users receive no warning or workaround." }
+        ]
+      },
+      {
+        "id": "implementation-complexity",
+        "score": 70,
+        "rationale": "Scope is a contained removal with no new dependencies or cross-team coordination.",
+        "signals": [
+          { "type": "positive", "statement": "Single-team removal with no stated cross-system dependencies." }
+        ]
+      }
+    ]
+  },
+  "risks": [
+    {
+      "id": "risk-unknown-reliant-users",
+      "severity": "high",
+      "statement": "The users who rely on this feature have not been identified or contacted before removal.",
+      "linkedDimension": "existing-user-risk"
+    },
+    {
+      "id": "risk-internal-justification-only",
+      "severity": "medium",
+      "statement": "Change is driven entirely by internal preference with no external trigger.",
+      "linkedDimension": "change-justification"
+    }
+  ],
+  "missingValidation": [
+    {
+      "question": "Who are the users currently using this feature, and what account tier are they on?",
+      "whyItMatters": "Removal that affects enterprise or power users carries disproportionate churn risk.",
+      "howToCheck": "Segment usage data by account tier and user role before proceeding.",
+      "linkedDimension": "existing-user-risk"
+    },
+    {
+      "question": "Is this feature exposed via a public API or third-party integration?",
+      "whyItMatters": "API removals are functionally irreversible and require advance deprecation notice.",
+      "howToCheck": "Audit API documentation and search for external references in support tickets.",
+      "linkedDimension": "reversibility"
+    }
+  ],
+  "refineRecommendation": {
+    "whatsWrong": [
+      "Existing user reliance is unmeasured — the identity of the 2% who use this is unknown.",
+      "No external trigger justifies the timing of this change.",
+      "User-facing benefit is absent; the stated improvement is entirely internal."
+    ],
+    "improvements": [
+      {
+        "action": "Segment feature usage by account tier and user role before deciding to remove.",
+        "targetDimension": "existing-user-risk",
+        "expectedLift": "large"
+      },
+      {
+        "action": "Identify one external signal — a customer complaint, support trend, or competitive reason — that justifies the timing.",
+        "targetDimension": "change-justification",
+        "expectedLift": "moderate"
+      }
+    ],
+    "smallerExperiment": "Hide the feature behind a flag for 30 days and measure whether any users report its absence before removing it permanently.",
+    "reEvaluateWhen": "Usage segment by account tier is known and at least one external justification for the timing is documented."
+  }
+}
+```

@@ -161,3 +161,113 @@ Tag the appropriate dimension `weak` or `counter` when you see these:
   whether `refineRecommendation` is `null`.
 - Every `linkedDimension` value in `risks` and `missingValidation`
   must match one of the 7 dimension IDs above.
+
+---
+
+## Output Example
+
+The following is a complete, correctly structured response for
+`mode: feature`. Every field name, every dimension `id`, and the
+overall object shape are canonical. Replace all values with content
+derived from the actual input. Do not add or remove fields.
+
+```json
+{
+  "mode": "feature",
+  "summary": "Validated enterprise request with explicit revenue linkage. Scope is contained and risk is low.",
+  "scorecard": {
+    "dimensions": [
+      {
+        "id": "problem-clarity",
+        "score": 85,
+        "rationale": "Named user segment faces a specific, well-described friction. Stated in customer terms.",
+        "signals": [
+          { "type": "positive", "statement": "Specific friction described by named user role." },
+          { "type": "unknown",  "statement": "Frequency of the friction is not quantified." }
+        ]
+      },
+      {
+        "id": "evidence-of-need",
+        "score": 80,
+        "rationale": "Multiple named accounts cited. Demand is quantified by ticket count.",
+        "signals": [
+          { "type": "positive", "statement": "18 support tickets reference the same blocker." },
+          { "type": "positive", "statement": "3 deals contingent on this capability." }
+        ]
+      },
+      {
+        "id": "solution-fit",
+        "score": 75,
+        "rationale": "Proposed feature directly removes the stated friction. Mechanism is straightforward.",
+        "signals": [
+          { "type": "positive", "statement": "Export format matches downstream tool requirements." },
+          { "type": "unknown",  "statement": "Edge cases for large data volumes not addressed." }
+        ]
+      },
+      {
+        "id": "user-value",
+        "score": 72,
+        "rationale": "Benefit is described in workflow terms. Removes a manual step.",
+        "signals": [
+          { "type": "positive", "statement": "Eliminates manual screen-scraping workaround." }
+        ]
+      },
+      {
+        "id": "implementation-cost",
+        "score": 68,
+        "rationale": "Contained engineering scope. No new operational surface introduced.",
+        "signals": [
+          { "type": "positive", "statement": "No new infrastructure required." },
+          { "type": "negative", "statement": "Large export jobs may require an async queue." }
+        ]
+      },
+      {
+        "id": "strategic-alignment",
+        "score": 70,
+        "rationale": "Consistent with enterprise segment focus. Not central to current quarter goals.",
+        "signals": [
+          { "type": "positive", "statement": "Enterprise segment is a stated priority." },
+          { "type": "unknown",  "statement": "No explicit roadmap reference provided." }
+        ]
+      },
+      {
+        "id": "risk-profile",
+        "score": 78,
+        "rationale": "Contained blast radius. No new trust or privacy surface. Reversible.",
+        "signals": [
+          { "type": "positive", "statement": "Read-only export introduces no data mutation risk." }
+        ]
+      }
+    ]
+  },
+  "risks": [
+    {
+      "id": "risk-async-queue",
+      "severity": "medium",
+      "statement": "Large exports may timeout without an async processing queue.",
+      "linkedDimension": "implementation-cost"
+    },
+    {
+      "id": "risk-no-volume-cap",
+      "severity": "low",
+      "statement": "No stated upper bound on export size could strain infrastructure.",
+      "linkedDimension": "risk-profile"
+    }
+  ],
+  "missingValidation": [
+    {
+      "question": "What is the maximum expected export size in rows?",
+      "whyItMatters": "Determines whether sync or async processing is required.",
+      "howToCheck": "Query existing report sizes in production data.",
+      "linkedDimension": "implementation-cost"
+    },
+    {
+      "question": "Do the three contingent deals represent committed or potential revenue?",
+      "whyItMatters": "Determines urgency and whether to prioritize over other work.",
+      "howToCheck": "Confirm with account executives on current deal status.",
+      "linkedDimension": "evidence-of-need"
+    }
+  ],
+  "refineRecommendation": null
+}
+```

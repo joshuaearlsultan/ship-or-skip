@@ -165,3 +165,115 @@ Tag the appropriate dimension `weak` or `counter` when you see these:
   converts a slogan or total-roadmap framing into a bounded test.
 - Every `linkedDimension` value in `risks` and `missingValidation`
   must match one of the 7 dimension IDs above.
+
+---
+
+## Output Example
+
+The following is a complete, correctly structured response for
+`mode: concept`. Every field name, every dimension `id`, and the
+overall object shape are canonical. Replace all values with content
+derived from the actual input. Do not add or remove fields.
+
+Note: this example scores **Skip** and therefore sets
+`refineRecommendation` to `null`. Populate it for Refine verdicts.
+
+```json
+{
+  "mode": "concept",
+  "summary": "Direction is a slogan with no named differentiator. No bounded experiment exists and full commitment would freeze the roadmap.",
+  "scorecard": {
+    "dimensions": [
+      {
+        "id": "strategic-coherence",
+        "score": 50,
+        "rationale": "Direction is plausible but the company thesis is not stated. Coherence cannot be verified.",
+        "signals": [
+          { "type": "unknown",  "statement": "Company thesis is not named in the input." }
+        ]
+      },
+      {
+        "id": "market-signal",
+        "score": 45,
+        "rationale": "One soft signal referenced. No hard market data or named customer pull.",
+        "signals": [
+          { "type": "positive", "statement": "A competitor recently launched a similar direction." },
+          { "type": "negative", "statement": "No named customer has requested this direction." }
+        ]
+      },
+      {
+        "id": "differentiation",
+        "score": 40,
+        "rationale": "Concept as worded matches public messaging from multiple competitors. No specific angle stated.",
+        "signals": [
+          { "type": "negative", "statement": "Positioning could be claimed by any player in the category." },
+          { "type": "unknown",  "statement": "No concrete differentiator stated beyond the label." }
+        ]
+      },
+      {
+        "id": "testability",
+        "score": 35,
+        "rationale": "Framing is total-roadmap. No bounded experiment described. Smallest test equals full commitment.",
+        "signals": [
+          { "type": "negative", "statement": "Concept requires reimagining every existing feature before any signal is produced." }
+        ]
+      },
+      {
+        "id": "resource-demand",
+        "score": 30,
+        "rationale": "Implied scope would freeze the roadmap. No resource estimate is provided.",
+        "signals": [
+          { "type": "negative", "statement": "Total-roadmap framing implies most of the organization for an unknown duration." },
+          { "type": "unknown",  "statement": "Team capacity and current commitments are not stated." }
+        ]
+      },
+      {
+        "id": "optionality",
+        "score": 55,
+        "rationale": "Direction opens some adjacent doors. Long-term lock-in is not described.",
+        "signals": [
+          { "type": "positive", "statement": "Primitives built for this direction could serve multiple future use cases." }
+        ]
+      },
+      {
+        "id": "conviction-strength",
+        "score": 40,
+        "rationale": "Conviction is internal. No customer signal or external evidence cited beyond competitor observation.",
+        "signals": [
+          { "type": "negative", "statement": "Stated rationale is internal enthusiasm and a competitor move." },
+          { "type": "unknown",  "statement": "No customer interview or market data backs the direction." }
+        ]
+      }
+    ]
+  },
+  "risks": [
+    {
+      "id": "risk-no-bounded-test",
+      "severity": "high",
+      "statement": "No experiment exists that could validate or falsify the concept before full commitment.",
+      "linkedDimension": "testability"
+    },
+    {
+      "id": "risk-roadmap-freeze",
+      "severity": "high",
+      "statement": "Total-roadmap framing would halt all other work for an undefined period.",
+      "linkedDimension": "resource-demand"
+    }
+  ],
+  "missingValidation": [
+    {
+      "question": "Which specific customer problem would this concept solve that the current product does not?",
+      "whyItMatters": "Without a named problem the concept cannot be validated and conviction stays internal.",
+      "howToCheck": "Conduct five customer interviews focused on the proposed direction.",
+      "linkedDimension": "conviction-strength"
+    },
+    {
+      "question": "What is the smallest slice of this concept shippable in one quarter?",
+      "whyItMatters": "Identifies whether a bounded experiment is possible before a full roadmap commitment.",
+      "howToCheck": "Workshop with engineering to identify the minimum viable version.",
+      "linkedDimension": "testability"
+    }
+  ],
+  "refineRecommendation": null
+}
+```

@@ -47,7 +47,10 @@ export default defineConfig({
                   ?.split(",")[0]
                   ?.trim() ?? "dev";
 
-              import("./api/evaluate")
+              // ssrLoadModule goes through Vite's SSR module graph and
+              // invalidates on file save — unlike native import() which
+              // caches the module permanently and ignores edits.
+              server.ssrLoadModule("/api/evaluate.ts")
                 .then(({ handleEvaluate }) => handleEvaluate(body, ip))
                 .then((result) => {
                   res.setHeader("Content-Type", "application/json");

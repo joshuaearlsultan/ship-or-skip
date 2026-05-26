@@ -15,30 +15,28 @@ interface LoadedPrompt {
   promptVersion: string
 }
 
-const cache = new Map<IdeaMode, LoadedPrompt>()
-
+// No module-level cache — .md files are read fresh on every call.
+// In dev: ensures prompt edits take effect immediately without a server restart.
+// In production (Vercel serverless): each invocation is a fresh process anyway.
 export function loadPrompt(mode: IdeaMode): LoadedPrompt {
-  const cached = cache.get(mode)
-  if (cached) return cached
-
   const system = readPromptFile('system.md')
   const modeContent = readPromptFile(`${mode}.md`)
-  const systemPrompt = `${system}\n\n---\n\n${modeContent}`
+
+  const closingReminder = [
+    '---',
+    '',
+    'FINAL REMINDER: You are a JSON generator. Your response is a single JSON object.',
+    'First character: {',
+    'Last character: }',
+    'No other text.',
+  ].join('\n')
+
+  const systemPrompt = `${system}\n\n---\n\n${modeContent}\n\n${closingReminder}`
 
   const hash = createHash('sha256')
     .update(systemPrompt)
     .digest('hex')
     .slice(0, 8)
 
-  const loaded: LoadedPrompt = {
-    systemPrompt,
-    promptVersion: `${mode}@${hash}`,
-  }
-
-  cache.set(mode, loaded)
-  return loaded
-}
-
-export function clearPromptCache(): void {
-  cache.clear()
+  return { systemPrompt, promptVersion: `${mode}@${hash}` }
 }
