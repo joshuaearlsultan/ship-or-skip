@@ -43,8 +43,9 @@ const ERROR_MAP: Record<ApiErrorCode, FriendlyError> = {
     message: 'The model returned a response in an unexpected format. Try again.',
   },
   invalid_input: {
-    title: 'Invalid input',
-    message: 'Your idea could not be processed. Try rephrasing it.',
+    title: 'Not enough to evaluate',
+    message:
+      'Describe a specific feature idea, product change, or strategic concept. Including customer demand, usage data, revenue impact, or implementation constraints improves the evaluation.',
   },
   internal: {
     title: 'Something went wrong',

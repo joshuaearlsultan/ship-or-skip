@@ -1,42 +1,42 @@
-export type IdeaMode = 'feature' | 'change' | 'concept'
+export type IdeaMode = "feature" | "change" | "concept";
 
 export interface EvaluationRequest {
-  idea: string
-  mode: IdeaMode
-  context?: string
+  idea: string;
+  mode: IdeaMode;
+  context?: string;
 }
 
 export interface ModeDescriptor {
-  id: IdeaMode
-  label: string
-  inputLabel: string
-  placeholder: string
-  blurb: string
+  id: IdeaMode;
+  label: string;
+  inputLabel: string;
+  placeholder: string;
+  blurb: string;
 }
 
 export const MODE_DESCRIPTORS: ModeDescriptor[] = [
   {
-    id: 'feature',
-    label: 'Feature Idea',
-    inputLabel: 'Feature Idea',
+    id: "feature",
+    label: "Feature Idea",
+    inputLabel: "Feature Idea",
     placeholder:
-      'Describe a feature idea you are considering building. Include the user problem if you know it.',
-    blurb: 'Is this new capability worth building?',
+      "e.g. Add CSV export to reporting. 18 customers requested it. 3 deals are blocked.",
+    blurb: "Is this new capability worth building?",
   },
   {
-    id: 'change',
-    label: 'Product Change',
-    inputLabel: 'Product Change',
+    id: "change",
+    label: "Product Change",
+    inputLabel: "Product Change",
     placeholder:
-      'Describe a change to existing behavior — removal, redesign, default change, or expansion.',
-    blurb: 'Is this modification an improvement or a regression risk?',
+      "e.g. Remove comment threads. Usage is below 2% and maintenance cost is rising.",
+    blurb: "Is this modification an improvement or a regression risk?",
   },
   {
-    id: 'concept',
-    label: 'Concept',
-    inputLabel: 'Concept',
+    id: "concept",
+    label: "Concept",
+    inputLabel: "Concept",
     placeholder:
-      'Describe a strategic direction, positioning shift, or broader product hypothesis.',
-    blurb: 'Is this direction worth committing resources to?',
+      "e.g. Pivot to an AI-first product strategy. Every workflow becomes AI-assisted.",
+    blurb: "Is this direction worth committing resources to?",
   },
-]
+];

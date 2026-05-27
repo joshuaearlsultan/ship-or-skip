@@ -26,7 +26,8 @@ export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, te
 
   const examples = useMemo(() => examplesForMode(mode), [mode])
   const trimmed = idea.trim()
-  const canRun = trimmed.length > 0 && !busy
+  const wordCount = trimmed.split(/\s+/).filter(Boolean).length
+  const canRun = wordCount >= 3 && !busy
   const remaining = MAX_LEN - idea.length
 
   function handleModeChange(next: IdeaMode) {
