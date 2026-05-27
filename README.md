@@ -4,6 +4,16 @@ A pre-build decision engine for product teams. Submit a feature idea, a product 
 
 ---
 
+## Live Demo
+
+Try Ship or Skip instantly in your browser.
+
+**[→ ship-or-skip-pi.vercel.app](https://ship-or-skip-pi.vercel.app/)**
+
+No sign-up. No API key. Click **Try Example** to explore Ship, Refine, and Skip outcomes across all three modes, or switch to Claude Mode to evaluate your own idea.
+
+---
+
 ## Quick Start
 
 ```bash
