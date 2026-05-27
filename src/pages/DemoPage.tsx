@@ -18,13 +18,13 @@ interface DemoPageProps {
 const MODE_GROUPS: { mode: IdeaMode; label: string }[] = [
   { mode: 'feature', label: 'Feature Ideas' },
   { mode: 'change', label: 'Product Changes' },
-  { mode: 'concept', label: 'Strategic Concepts' },
+  { mode: 'concept', label: 'Concepts' },
 ]
 
 const MODE_LABEL: Record<IdeaMode, string> = {
   feature: 'Feature Idea',
   change: 'Product Change',
-  concept: 'Strategic Concept',
+  concept: 'Concept',
 }
 
 const VERDICT_LABEL: Record<Verdict, string> = {

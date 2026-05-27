@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Navigate, Routes, Route } from 'react-router-dom'
 import { LandingPage } from './pages/LandingPage'
 import { EvaluatorPage } from './pages/EvaluatorPage'
 import { DemoPage } from './pages/DemoPage'
@@ -32,6 +32,7 @@ function App() {
       <Route path="/" element={<LandingPage dark={dark} toggleDark={toggleDark} />} />
       <Route path="/evaluate" element={<EvaluatorPage dark={dark} toggleDark={toggleDark} />} />
       <Route path="/demo" element={<DemoPage dark={dark} toggleDark={toggleDark} />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

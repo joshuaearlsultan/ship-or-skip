@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 
 const STEPS = [
-  'Assessing problem clarity',
-  'Reviewing evidence of need',
-  'Evaluating solution fit',
-  'Measuring user value',
-  'Calculating verdict',
+  'Analyzing input',
+  'Reviewing evidence',
+  'Evaluating tradeoffs',
+  'Scoring dimensions',
+  'Computing verdict',
 ]
 
 // SVG arc spinner — r=40, circumference ≈ 251, 78% arc ≈ 196px, gap ≈ 55px

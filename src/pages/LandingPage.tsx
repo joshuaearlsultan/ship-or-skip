@@ -122,7 +122,7 @@ const STEPS = [
   {
     number: '02',
     title: 'Choose an evaluation mode',
-    body: 'Select Feature Idea, Product Change, or New Concept. Each mode uses a tailored rubric for that type of decision.',
+    body: 'Select Feature Idea, Product Change, or Concept. Each mode uses a tailored rubric for that type of decision.',
   },
   {
     number: '03',

@@ -17,7 +17,7 @@ npm install
 ```bash
 npm run dev
 # Open http://localhost:5173
-# The app starts in Mock Mode — click Try Example on any tab for an instant result.
+# The app starts in Mock Mode — click Try Example for an instant result.
 ```
 
 **Run with live Claude evaluations:**
@@ -40,10 +40,10 @@ Switch between Mock Mode and Claude Mode at any time using the badge in the top-
 Three tabs sit at the top of the input panel: **Feature Idea**, **Product Change**, and **Concept**. Pick the one that matches what you are evaluating. Each mode uses a different 7-dimension rubric calibrated to that decision type.
 
 **2. Enter your idea.**
-Describe the feature, change, or concept in the text area. Specific submissions produce specific signals — named users, data points, and concrete scope are more useful than vague descriptions. One to three sentences is sufficient. Click **Try Example** on any tab to load a pre-written idea.
+Describe the feature, change, or concept in the text area. Specific submissions produce specific signals — named users, data points, and concrete scope are more useful than vague descriptions. One to three sentences is sufficient. Click **Try Example** to load a pre-written idea for the current mode.
 
 **3. Run the evaluation.**
-Click **Evaluate**. Mock mode returns a result instantly. Claude mode takes three to ten seconds while the model scores all seven dimensions.
+Click **Run Ship or Skip**. Mock Mode returns a result instantly. Claude Mode takes three to ten seconds while the model scores all seven dimensions.
 
 **4. Read the result.**
 The verdict card shows the decision (**Ship**, **Refine**, or **Skip**), a confidence score, and a one-sentence summary. Click any dimension row in the scorecard to expand its rationale and signals. The Risks panel lists named concerns ordered by severity. Validation Gaps show what is unknown and how to resolve each gap. Refine verdicts include a Suggested Direction panel with named weaknesses, targeted improvements, and a specific re-evaluate trigger.
@@ -70,6 +70,12 @@ Most product teams make build-or-kill decisions informally: in Slack threads, in
 - **Makes reasoning portable.** Every evaluation exports to Markdown — ready for a spec, a stakeholder update, or a PR description.
 - **Works across decision types.** Features, product changes, and strategic pivots each use a different rubric calibrated to what actually predicts success in that category.
 
+### What makes Ship or Skip different?
+
+Most AI tools return free-form opinions. Ship or Skip applies a fixed evaluation framework: the model scores seven named dimensions, and the verdict is computed server-side by a deterministic weighted formula. The same idea evaluated twice produces the same verdict. The model cannot override the framework, skip an inconvenient dimension, or justify a weak idea with a confident summary.
+
+This matters for product decisions: you want a consistent, auditable signal — not a different answer depending on how you phrase the question.
+
 ---
 
 ## Features
@@ -91,13 +97,17 @@ Most product teams make build-or-kill decisions informally: in Slack threads, in
 
 ## Screenshots
 
-The app evaluates any product idea across three modes and returns a structured result card with a verdict, dimension scorecard, risks, and validation gaps.
+| Landing page | Demo page |
+| --- | --- |
+| ![Landing page](./docs/screenshots/landing.png) | ![Demo page — example decisions](./docs/screenshots/demo.png) |
 
-| Ship verdict                              | Refine verdict                                | Skip verdict                                 |
-| ----------------------------------------- | --------------------------------------------- | -------------------------------------------- |
-| High-confidence idea with strong evidence | Direction is plausible but submission is thin | Fundamental problem with evidence or framing |
+| Ship verdict | Refine verdict | Skip verdict |
+| --- | --- | --- |
+| ![Ship](./docs/screenshots/verdict-ship.png) | ![Refine](./docs/screenshots/verdict-refine.png) | ![Skip](./docs/screenshots/verdict-skip.png) |
 
-> **To see it in action:** run `npm run dev` and click **Try Example** on any tab — no API key required. The Feature tab ships the bulk-export example, the Change tab refines the remove-comments example, and the Concept tab skips the AI-first pivot.
+![Mock-blocked state](./docs/screenshots/mock-blocked.png)
+
+> **To see it in action:** run `npm run dev` and click **Try Example** — no API key required. The Feature tab ships the bulk-export example, the Change tab refines the remove-comments example, and the Concept tab skips the AI-first pivot.
 
 ---
 
@@ -245,6 +255,34 @@ npm run build     # TypeScript compile + Vite production build → dist/
 npm run preview   # Serve the production build locally
 npm run lint      # ESLint check across all source files
 ```
+
+---
+
+## Mock Mode and Claude Mode
+
+**Mock Mode** (default) returns one of five pre-built evaluations instantly — no API key, no network call, no tokens consumed. It covers all three modes and all three verdict outcomes. Use it to explore the full result UI before configuring a live key.
+
+In Mock Mode, only the five built-in examples return results. Submitting arbitrary text shows an informational message and prompts switching to Claude Mode.
+
+**Claude Mode** sends the idea to Claude via the Anthropic API. The same evaluation framework applies: Claude scores dimensions, and the server computes the verdict. Results are cached in memory by `(mode, idea)` for the session to avoid duplicate calls.
+
+Switch between modes using the badge in the top-right corner of the evaluator. Switching to Claude Mode shows a confirmation before making any API calls.
+
+---
+
+## Writing Effective Evaluations
+
+The more evidence your description contains, the more useful the evaluation. Vague descriptions produce low evidence-quality scores and long validation-gap lists.
+
+**Include when available:**
+
+- Specific users or customer segments ("18 enterprise customers", "3 deals blocked on sign-off")
+- Quantified demand (support ticket counts, feature request volume, survey data)
+- Usage data ("below 2% of rows have comments over the past 90 days")
+- Revenue or business impact ("conditional on completing the audit")
+- Implementation constraints (team size, timeline, technical dependencies)
+
+One sentence with a concrete data point scores better than three paragraphs without one.
 
 ---
 
@@ -441,15 +479,18 @@ ship-or-skip/
 │   │   │   ├── InputSection.tsx        # Idea textarea, examples, submit button
 │   │   │   └── ModeTabs.tsx            # Feature / Change / Concept tab switcher
 │   │   ├── layout/
-│   │   │   └── Header.tsx              # Logo, dark mode toggle, live/mock toggle
+│   │   │   ├── Header.tsx              # Logo, dark mode toggle, live/mock toggle (Evaluator)
+│   │   │   └── LandingNav.tsx          # Logo, dark mode toggle (Landing and Demo pages)
 │   │   └── result/
 │   │       ├── DecisionCard.tsx        # Verdict badge, confidence score, summary
 │   │       ├── ResultPanel.tsx         # Full result: scorecard, risks, gaps, refine
+│   │       ├── VerdictIcon.tsx         # Ship / Refine / Skip boat icon variants
 │   │       └── CopyEvaluationButton.tsx # Exports full evaluation to Markdown
 │   │
 │   ├── data/
-│   │   ├── examples.ts    # Four built-in example ideas shown in InputSection
-│   │   └── mockResults.ts # Pre-built Ship / Refine / Skip mock DecisionResults
+│   │   ├── demoExamples.ts # Five canonical examples shown on the Demo page
+│   │   ├── examples.ts     # Built-in example ideas and mock result routing
+│   │   └── mockResults.ts  # Pre-built Ship / Refine / Skip mock DecisionResults
 │   │
 │   ├── hooks/
 │   │   └── useEvaluation.ts  # State machine: idle → loading → success / error
@@ -592,7 +633,7 @@ Run through this list before submitting the repository.
 
 - [ ] `npm run build` completes with no TypeScript or lint errors
 - [ ] Mock mode works with zero configuration: start the server with `USE_MOCK_EVALUATIONS` unset and confirm results appear
-- [ ] All three mode tabs return results in mock mode (Feature → Ship, Change → Refine, Concept → Refine/Skip)
+- [ ] All three mode tabs return results in mock mode (Feature → Ship, Change → Refine, Concept → Skip)
 - [ ] Live mode works with a valid `ANTHROPIC_API_KEY` and `USE_MOCK_EVALUATIONS=false`
 - [ ] All three verdict types observed in live mode (Ship, Refine, Skip)
 - [ ] Copy to Markdown button produces valid Markdown output
