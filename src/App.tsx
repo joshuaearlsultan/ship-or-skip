@@ -13,17 +13,19 @@ function App() {
   })
 
   useEffect(() => {
-    const root = document.documentElement
     if (dark) {
-      root.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
+      document.documentElement.classList.add('dark')
     } else {
-      root.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
+      document.documentElement.classList.remove('dark')
     }
   }, [dark])
 
-  const toggleDark = () => setDark((d) => !d)
+  const toggleDark = () =>
+    setDark((d) => {
+      const next = !d
+      localStorage.setItem('theme', next ? 'dark' : 'light')
+      return next
+    })
 
   return (
     <Routes>
