@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { LandingPage } from './pages/LandingPage'
 import { EvaluatorPage } from './pages/EvaluatorPage'
+import { DemoPage } from './pages/DemoPage'
 
 function App() {
   const [dark, setDark] = useState<boolean>(() => {
@@ -28,6 +29,7 @@ function App() {
     <Routes>
       <Route path="/" element={<LandingPage dark={dark} toggleDark={toggleDark} />} />
       <Route path="/evaluate" element={<EvaluatorPage dark={dark} toggleDark={toggleDark} />} />
+      <Route path="/demo" element={<DemoPage dark={dark} toggleDark={toggleDark} />} />
     </Routes>
   )
 }
