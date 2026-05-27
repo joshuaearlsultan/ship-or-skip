@@ -6,15 +6,17 @@ import { ModeTabs } from './ModeTabs'
 
 interface InputSectionProps {
   busy: boolean
+  idea: string
+  onIdeaChange: (value: string) => void
   onRun: (idea: string, mode: IdeaMode) => void
   onModeChange?: (mode: IdeaMode) => void
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>
 }
 
 const MAX_LEN = 2000
 
-export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
+export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, textareaRef }: InputSectionProps) {
   const [mode, setMode] = useState<IdeaMode>('feature')
-  const [idea, setIdea] = useState('')
   const [exampleIndex, setExampleIndex] = useState(0)
 
   const descriptor = useMemo(
@@ -36,7 +38,7 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
   function handleTryExample() {
     if (examples.length === 0) return
     const next = examples[exampleIndex % examples.length]
-    setIdea(next.idea)
+    onIdeaChange(next.idea)
     setExampleIndex((i) => i + 1)
     onRun(next.idea.trim(), mode)
   }
@@ -64,10 +66,11 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
           {descriptor.inputLabel}
         </label>
         <textarea
+          ref={textareaRef}
           id="idea"
           name="idea"
           value={idea}
-          onChange={(e) => setIdea(e.target.value.slice(0, MAX_LEN))}
+          onChange={(e) => onIdeaChange(e.target.value.slice(0, MAX_LEN))}
           placeholder={descriptor.placeholder}
           rows={5}
           disabled={busy}
@@ -94,7 +97,17 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
               ))}
             </div>
           ) : (
-            <span />
+            <button
+              type="button"
+              onClick={() => onIdeaChange('')}
+              disabled={busy}
+              aria-label="Clear idea text"
+              title="Clear"
+              className="flex items-center gap-1 text-[11px] text-neutral-400 transition-colors hover:text-neutral-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 disabled:pointer-events-none dark:text-neutral-600 dark:hover:text-neutral-400"
+            >
+              <XIcon />
+              Clear
+            </button>
           )}
           <span className="ml-3 shrink-0" aria-hidden>
             {remaining} left
@@ -120,5 +133,18 @@ export function InputSection({ busy, onRun, onModeChange }: InputSectionProps) {
         </button>
       </div>
     </form>
+  )
+}
+
+function XIcon() {
+  return (
+    <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M3 3l10 10M13 3L3 13"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }

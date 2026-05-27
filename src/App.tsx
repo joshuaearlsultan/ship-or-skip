@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { IdeaMode } from './types/request'
 import { Header } from './components/layout/Header'
 import { InputSection } from './components/input/InputSection'
@@ -8,6 +8,9 @@ import { useEvaluation } from './hooks/useEvaluation'
 function App() {
   const { state, run, reset, evalMode, setEvalMode } = useEvaluation()
   const busy = state.status === 'loading'
+
+  const [idea, setIdea] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [dark, setDark] = useState<boolean>(() => {
     const stored = localStorage.getItem('theme')
@@ -35,6 +38,12 @@ function App() {
     if (state.status !== 'idle') reset()
   }
 
+  function handleReset() {
+    reset()
+    setIdea('')
+    requestAnimationFrame(() => textareaRef.current?.focus())
+  }
+
   return (
     <div className="min-h-full bg-neutral-50 dark:bg-surface-0">
       <Header
@@ -44,8 +53,15 @@ function App() {
           onEvalModeChange={setEvalMode}
         />
       <main className="mx-auto max-w-3xl px-6 py-8 space-y-8">
-        <InputSection busy={busy} onRun={handleRun} onModeChange={handleModeChange} />
-        <ResultPanel state={state} onSwitchToMock={() => setEvalMode('mock')} />
+        <InputSection
+          busy={busy}
+          idea={idea}
+          onIdeaChange={setIdea}
+          textareaRef={textareaRef}
+          onRun={handleRun}
+          onModeChange={handleModeChange}
+        />
+        <ResultPanel state={state} onReset={handleReset} onSwitchToMock={() => setEvalMode('mock')} />
       </main>
     </div>
   )

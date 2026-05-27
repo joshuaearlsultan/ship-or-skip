@@ -19,10 +19,11 @@ import { getFriendlyError } from '../../lib/friendlyError'
 
 interface ResultPanelProps {
   state: EvaluationState
+  onReset?: () => void
   onSwitchToMock?: () => void
 }
 
-export function ResultPanel({ state, onSwitchToMock }: ResultPanelProps) {
+export function ResultPanel({ state, onReset, onSwitchToMock }: ResultPanelProps) {
   if (state.status === 'idle') return <EmptyState />
   if (state.status === 'loading') return <LoadingState />
   if (state.status === 'error')
@@ -35,6 +36,7 @@ export function ResultPanel({ state, onSwitchToMock }: ResultPanelProps) {
       result={state.result}
       request={state.request}
       fromCache={state.fromCache}
+      onReset={onReset}
     />
   )
 }
@@ -118,10 +120,12 @@ function ReadyState({
   result,
   request,
   fromCache,
+  onReset,
 }: {
   result: DecisionResult
   request: EvaluationRequest
   fromCache: boolean
+  onReset?: () => void
 }) {
   return (
     <div className="space-y-4">
@@ -134,11 +138,22 @@ function ReadyState({
       ) : null}
       <div className="flex items-center justify-between pt-1">
         <CacheToast show={fromCache} />
-        <CopyEvaluationButton
-          result={result}
-          idea={request.idea}
-          mode={request.mode}
-        />
+        <div className="flex items-center gap-2">
+          {onReset ? (
+            <button
+              type="button"
+              onClick={onReset}
+              className="rounded-md border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-300 dark:border-surface-border dark:bg-surface-1 dark:text-neutral-400 dark:hover:bg-surface-2"
+            >
+              New evaluation
+            </button>
+          ) : null}
+          <CopyEvaluationButton
+            result={result}
+            idea={request.idea}
+            mode={request.mode}
+          />
+        </div>
       </div>
     </div>
   )
