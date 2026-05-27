@@ -324,7 +324,7 @@ enterprise customers currently rely on it.
 
 **Expected verdict: Refine**
 
-The removal is justified by usage data, but the impact on the active minority is unquantified and no migration path exists for existing comment data.
+Usage is low, but affected users, migration impact, and reversibility remain unknown.
 
 ---
 
@@ -337,7 +337,11 @@ as an AI workflow.
 
 **Expected verdict: Skip**
 
-Scoped as a slogan rather than a testable hypothesis, with no differentiation from competitors making identical claims and no bounded experiment proposed.
+Broad strategic direction with no customer evidence, bounded experiment, or defensible differentiation.
+
+---
+
+> These examples intentionally demonstrate different verdict outcomes and evaluation modes. Exact scores may vary between runs, but verdicts should remain broadly consistent for the same inputs.
 
 ---
 
