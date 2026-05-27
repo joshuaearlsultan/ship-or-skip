@@ -14,33 +14,44 @@ No sign-up. No API key. Click **Try Example** to explore Ship, Refine, and Skip 
 
 ---
 
-## Quick Start
+## Screenshots
 
-```bash
-git clone https://github.com/joshuaearlsultan/ship-or-skip.git
-cd ship-or-skip
-npm install
-```
+| Landing page | Demo page |
+| --- | --- |
+| ![Landing page](./docs/screenshots/landing.png) | ![Demo page — example decisions](./docs/screenshots/demo.png) |
 
-**Run with mock data (no API key needed):**
+| Ship verdict | Refine verdict | Skip verdict |
+| --- | --- | --- |
+| ![Ship](./docs/screenshots/verdict-ship.png) | ![Refine](./docs/screenshots/verdict-refine.png) | ![Skip](./docs/screenshots/verdict-skip.png) |
 
-```bash
-npm run dev
-# Open http://localhost:5173
-# The app starts in Mock Mode — click Try Example for an instant result.
-```
+![Mock-blocked state](./docs/screenshots/mock-blocked.png)
 
-**Run with live Claude evaluations:**
+---
 
-```bash
-cp .env.example .env.local
-# Edit .env.local:
-#   ANTHROPIC_API_KEY=sk-ant-api03-...  ← your key from console.anthropic.com
-#   USE_MOCK_EVALUATIONS=false
-npm run dev
-```
+## Overview
 
-Switch between Mock Mode and Claude Mode at any time using the badge in the top-right corner of the app. Mock mode requires no configuration and covers all three verdict outcomes.
+### What it does
+
+Ship or Skip evaluates product ideas before engineering work begins. It scores each idea against a structured rubric, identifies risks, surfaces validation gaps, and produces a deterministic verdict driven by weighted dimension scores — not gut feeling or AI free-form opinion.
+
+### Problem it solves
+
+Most product teams make build-or-kill decisions informally: in Slack threads, in sprint planning, or from the loudest voice in the room. Ship or Skip forces a structured evaluation at the moment of ideation — before any design, estimation, or backlog entry happens.
+
+### Why teams need it
+
+- **Stops vanity features early.** Ideas framed as vague engagement bets score low on evidence-of-need and get a Skip before consuming roadmap space.
+- **Surfaces what you don't know.** Every unknown signal becomes a concrete validation question with a linked dimension and a how-to-check action.
+- **Makes reasoning portable.** Every evaluation exports to Markdown — ready for a spec, a stakeholder update, or a PR description.
+- **Works across decision types.** Features, product changes, and strategic pivots each use a different rubric calibrated to what actually predicts success in that category.
+
+---
+
+## What makes Ship or Skip different?
+
+Most AI tools return free-form opinions. Ship or Skip applies a fixed evaluation framework: the model scores seven named dimensions, and the verdict is computed server-side by a deterministic weighted formula. The same idea evaluated twice produces the same verdict. The model cannot override the framework, skip an inconvenient dimension, or justify a weak idea with a confident summary.
+
+This matters for product decisions: you want a consistent, auditable signal — not a different answer depending on how you phrase the question.
 
 ---
 
@@ -63,31 +74,6 @@ Click **Copy to Markdown** at the bottom of the result to copy the full evaluati
 
 ---
 
-## Overview
-
-### What it does
-
-Ship or Skip evaluates product ideas before engineering work begins. It scores each idea against a structured rubric, identifies risks, surfaces validation gaps, and produces a deterministic verdict driven by weighted dimension scores — not gut feeling or AI free-form opinion.
-
-### Problem it solves
-
-Most product teams make build-or-kill decisions informally: in Slack threads, in sprint planning, or from the loudest voice in the room. Ship or Skip forces a structured evaluation at the moment of ideation — before any design, estimation, or backlog entry happens.
-
-### Why teams need it
-
-- **Stops vanity features early.** Ideas framed as vague engagement bets score low on evidence-of-need and get a Skip before consuming roadmap space.
-- **Surfaces what you don't know.** Every unknown signal becomes a concrete validation question with a linked dimension and a how-to-check action.
-- **Makes reasoning portable.** Every evaluation exports to Markdown — ready for a spec, a stakeholder update, or a PR description.
-- **Works across decision types.** Features, product changes, and strategic pivots each use a different rubric calibrated to what actually predicts success in that category.
-
-### What makes Ship or Skip different?
-
-Most AI tools return free-form opinions. Ship or Skip applies a fixed evaluation framework: the model scores seven named dimensions, and the verdict is computed server-side by a deterministic weighted formula. The same idea evaluated twice produces the same verdict. The model cannot override the framework, skip an inconvenient dimension, or justify a weak idea with a confident summary.
-
-This matters for product decisions: you want a consistent, auditable signal — not a different answer depending on how you phrase the question.
-
----
-
 ## Features
 
 | Feature                     | Description                                                                                                                     |
@@ -102,169 +88,6 @@ This matters for product decisions: you want a consistent, auditable signal — 
 | **Mock mode**               | Full UI test without an API key; five pre-built mock results cover all three modes and all three verdict outcomes                |
 | **Dark mode**               | Persists to `localStorage`; respects `prefers-color-scheme` on first visit                                                      |
 | **In-memory result cache**  | Identical `(mode, idea)` pairs return cached results for 24 hours, avoiding redundant API calls                                 |
-
----
-
-## Screenshots
-
-| Landing page | Demo page |
-| --- | --- |
-| ![Landing page](./docs/screenshots/landing.png) | ![Demo page — example decisions](./docs/screenshots/demo.png) |
-
-| Ship verdict | Refine verdict | Skip verdict |
-| --- | --- | --- |
-| ![Ship](./docs/screenshots/verdict-ship.png) | ![Refine](./docs/screenshots/verdict-refine.png) | ![Skip](./docs/screenshots/verdict-skip.png) |
-
-![Mock-blocked state](./docs/screenshots/mock-blocked.png)
-
-> **To see it in action:** run `npm run dev` and click **Try Example** — no API key required. The Feature tab ships the bulk-export example, the Change tab refines the remove-comments example, and the Concept tab skips the AI-first pivot.
-
----
-
-## Technology Stack
-
-### Frontend
-
-- **React 19** — UI components and state
-- **TypeScript 6** — end-to-end type safety across frontend and API
-- **Tailwind CSS v4** — utility-first styling via the Vite plugin
-- **Vite 8** — dev server, HMR, and production build
-
-### Backend
-
-- **Vite SSR middleware** — `api/evaluate.ts` runs inside Vite's module graph; prompt file edits hot-reload without a server restart
-- **Zod 4** — request validation and model output schema enforcement
-- **Node.js** — serverless-compatible handler in `api/evaluate.ts`
-
-### AI Integration
-
-- **Anthropic Claude** — model is configurable via `ANTHROPIC_MODEL`; defaults to `claude-opus-4-5`
-- **Plain HTTP (`fetch`)** — sends requests to `/v1/chat/completions` with the system prompt as a `role:"system"` message
-- **Structured prompts** — `prompts/system.md` + mode-specific `prompts/{feature,change,concept}.md`, each containing a complete 7-dimension output example
-
-### Deployment
-
-- **Vercel** — `api/evaluate.ts` exports a standard Node.js handler and runs as a serverless function
-- Static frontend assets served from `dist/` after `npm run build`
-
----
-
-## Architecture Overview
-
-Every evaluation follows a single linear path from user input to rendered result.
-
-```
-  Browser (React)
-  ──────────────────────────────────────────────────────
-  Mode selector  ·  Idea textarea  ·  Submit button
-        │
-        │  POST /api/evaluate  { mode, idea }
-        ▼
-  api/evaluate.ts
-  ──────────────────────────────────────────────────────
-   1  Validate request         Zod — rejects malformed input early
-   2  Assemble prompt          prompts/system.md
-                             + prompts/{feature|change|concept}.md
-   3  Call Claude              POST /v1/chat/completions
-                               role:"system" + role:"user"
-   4  Extract + validate       JSON parse → Zod schema check
-                               7 dimensions, typed signals, char limits
-   5  Compute verdict          overallScore = Σ(score × weight)
-                               Ship | Refine | Skip  (deterministic)
-                               confidence  = f(score, spread, evidence)
-   6  Return DecisionResult
-        │
-        ▼
-  Browser (React)
-  ──────────────────────────────────────────────────────
-  Verdict card  ·  Scorecard  ·  Risks  ·  Validation gaps
-  Suggested Direction panel   (Refine verdicts only)
-  Copy to Markdown
-```
-
-**Key design decisions:**
-
-- **The model does not choose the verdict.** Claude scores dimensions; `api/evaluate.ts` applies the weighted formula and emits `ship`, `refine`, or `skip` deterministically. This makes the verdict auditable and reproducible.
-- **Strict output schema.** Model output is rejected if it fails Zod validation — the UI never renders partial or structurally incorrect data. String-length limits, enum constraints, and array bounds are all enforced before the result is assembled.
-- **Single process in development.** The `POST /api/evaluate` handler runs inside Vite's SSR middleware — same port as the frontend, no separate server to start. In production it deploys as a Vercel serverless function with no changes to the handler code.
-- **Prompt files are hot-reloadable.** `prompts/*.md` are read from disk on every request via `readFileSync`. Editing a prompt file takes effect on the next evaluation without restarting the dev server.
-
----
-
-## Prerequisites
-
-- **Node.js** ≥ 18 (for native `fetch` support)
-- **npm** ≥ 9
-- An **Anthropic API key** — obtain one at [console.anthropic.com](https://console.anthropic.com)
-
----
-
-## Installation
-
-```bash
-git clone https://github.com/joshuaearlsultan/ship-or-skip.git
-cd ship-or-skip
-npm install
-```
-
----
-
-## Environment Variables
-
-Copy `.env.example` to `.env.local` before running the dev server. `.env.local` is gitignored and never committed.
-
-```bash
-cp .env.example .env.local
-```
-
-| Variable               | Required            | Default                     | Description                                                                                                                                            |
-| ---------------------- | ------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ANTHROPIC_API_KEY`    | **Yes** (live mode) | —                           | Your Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com). Not needed when running in mock mode.                       |
-| `ANTHROPIC_BASE_URL`   | No                  | `https://api.anthropic.com` | Override the API base URL. Use this to point at a custom gateway or proxy. The application calls `/v1/chat/completions` on this base.                  |
-| `ANTHROPIC_MODEL`      | No                  | `claude-opus-4-5`           | The model ID to request. Passed as the `model` field. Any model available on your key is valid.                                                        |
-| `USE_MOCK_EVALUATIONS` | No                  | `true` (mock on)            | Set to exactly `"false"` to make live API calls. Any other value — including absent — keeps mock mode active. The app never calls the API by accident. |
-
-### Example `.env.local` for live mode
-
-```env
-ANTHROPIC_API_KEY=sk-ant-api03-...
-ANTHROPIC_BASE_URL=https://api.anthropic.com
-ANTHROPIC_MODEL=claude-opus-4-5
-USE_MOCK_EVALUATIONS=false
-```
-
-> **Gateway note:** If `ANTHROPIC_BASE_URL` points to a proxy that is OpenAI-compatible, Ship or Skip handles this correctly. It sends the system prompt as a `role:"system"` message to `/v1/chat/completions`, not as Anthropic's native top-level `system` field.
-
----
-
-## Running Locally
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Configure environment
-cp .env.example .env.local
-# Edit .env.local — set ANTHROPIC_API_KEY and USE_MOCK_EVALUATIONS=false
-
-# 3. Start the dev server
-npm run dev
-```
-
-The app starts at **http://localhost:5173** (Vite increments the port if 5173 is in use — check terminal output for the actual URL).
-
-The API endpoint at `POST /api/evaluate` is served by Vite's SSR middleware on the same port as the frontend. No separate backend process is required.
-
-**To run without an API key (mock data):**
-
-Leave `USE_MOCK_EVALUATIONS` unset or set it to any value other than `"false"`. The app returns pre-built results covering all three verdict outcomes.
-
-```bash
-# Other useful commands
-npm run build     # TypeScript compile + Vite production build → dist/
-npm run preview   # Serve the production build locally
-npm run lint      # ESLint check across all source files
-```
 
 ---
 
@@ -298,7 +121,7 @@ One sentence with a concrete data point scores better than three paragraphs with
 
 ## Example Inputs
 
-Three canonical examples — one per verdict outcome. Each maps to the same pre-built result shown on the [Demo page](/demo).
+Three canonical examples — one per verdict outcome. Each maps to the same pre-built result shown on the [Demo page](https://ship-or-skip-pi.vercel.app/demo).
 Exact dimension scores vary in live mode; verdicts should remain consistent for these inputs.
 
 ---
@@ -366,6 +189,180 @@ Usage is low, but affected users, migration impact, and reversibility remain unk
 
 ---
 
+## Quick Start
+
+```bash
+git clone https://github.com/joshuaearlsultan/ship-or-skip.git
+cd ship-or-skip
+npm install
+```
+
+**Run with mock data (no API key needed):**
+
+```bash
+npm run dev
+# Open http://localhost:5173
+# The app starts in Mock Mode — click Try Example for an instant result.
+```
+
+**Run with live Claude evaluations:**
+
+```bash
+cp .env.example .env.local
+# Edit .env.local:
+#   ANTHROPIC_API_KEY=sk-ant-api03-...  ← your key from console.anthropic.com
+#   USE_MOCK_EVALUATIONS=false
+npm run dev
+```
+
+Switch between Mock Mode and Claude Mode at any time using the badge in the top-right corner of the app. Mock Mode requires no configuration and covers all three verdict outcomes.
+
+---
+
+## Prerequisites
+
+- **Node.js** ≥ 18 (for native `fetch` support)
+- **npm** ≥ 9
+- An **Anthropic API key** — obtain one at [console.anthropic.com](https://console.anthropic.com)
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/joshuaearlsultan/ship-or-skip.git
+cd ship-or-skip
+npm install
+```
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env.local` before running the dev server. `.env.local` is gitignored and never committed.
+
+```bash
+cp .env.example .env.local
+```
+
+| Variable               | Required            | Default                     | Description                                                                                                                                            |
+| ---------------------- | ------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ANTHROPIC_API_KEY`    | **Yes** (live mode) | —                           | Your Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com). Not needed in mock mode.                                    |
+| `ANTHROPIC_BASE_URL`   | No                  | `https://api.anthropic.com` | Override the API base URL. Use this to point at a custom gateway or proxy.                                                                             |
+| `ANTHROPIC_MODEL`      | No                  | `claude-opus-4-5`           | The model ID to use. Any model available on your key is valid.                                                                                         |
+| `USE_MOCK_EVALUATIONS` | No                  | `true` (mock on)            | Set to exactly `"false"` to make live API calls. Any other value — including absent — keeps mock mode active. The app never calls the API by accident. |
+
+### Example `.env.local` for live mode
+
+```env
+ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_BASE_URL=https://api.anthropic.com
+ANTHROPIC_MODEL=claude-opus-4-5
+USE_MOCK_EVALUATIONS=false
+```
+
+> **Gateway note:** If `ANTHROPIC_BASE_URL` points to a custom proxy, Ship or Skip is compatible with OpenAI-compatible gateways.
+
+---
+
+## Running Locally
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Configure environment
+cp .env.example .env.local
+# Edit .env.local — set ANTHROPIC_API_KEY and USE_MOCK_EVALUATIONS=false
+
+# 3. Start the dev server
+npm run dev
+```
+
+The app starts at **http://localhost:5173**. Both the frontend and the `POST /api/evaluate` endpoint are served on the same port — no separate backend process required.
+
+**To run without an API key (mock data):**
+
+Leave `USE_MOCK_EVALUATIONS` unset or set it to any value other than `"false"`. The app returns pre-built results covering all three verdict outcomes.
+
+```bash
+# Other useful commands
+npm run build     # TypeScript compile + Vite production build → dist/
+npm run preview   # Serve the production build locally
+npm run lint      # ESLint check across all source files
+```
+
+---
+
+## Technology Stack
+
+### Frontend
+
+- **React 19** — UI components and state
+- **TypeScript 6** — end-to-end type safety across frontend and API
+- **Tailwind CSS v4** — utility-first styling via the Vite plugin
+- **Vite 8** — dev server, HMR, and production build
+
+### Backend
+
+- **Vite SSR middleware** — `api/evaluate.ts` runs in the same process as the frontend dev server; no separate backend
+- **Zod 4** — request validation and model output schema enforcement
+- **Node.js** — serverless-compatible handler deployed as a Vercel function
+
+### AI Integration
+
+- **Anthropic Claude** — `claude-opus-4-5` by default; model is configurable via `ANTHROPIC_MODEL`
+- **Mode-specific prompts** — `prompts/system.md` + `prompts/{feature,change,concept}.md`, each with a complete 7-dimension output example
+- **Schema-enforced output** — model response is validated against a strict Zod schema before the result is assembled; invalid responses are rejected, not displayed
+
+### Deployment
+
+- **Vercel** — `api/evaluate.ts` exports a standard Node.js handler recognised automatically by Vercel's runtime
+- Static frontend assets served from `dist/` after `npm run build`
+
+---
+
+## Architecture Overview
+
+Every evaluation follows a single linear path from user input to rendered result.
+
+```
+  Browser (React)
+  ──────────────────────────────────────────────────────
+  Mode selector  ·  Idea textarea  ·  Submit button
+        │
+        │  POST /api/evaluate  { mode, idea }
+        ▼
+  api/evaluate.ts
+  ──────────────────────────────────────────────────────
+   1  Validate request         Zod — rejects malformed input early
+   2  Assemble prompt          prompts/system.md
+                             + prompts/{feature|change|concept}.md
+   3  Call Claude              Anthropic API
+   4  Extract + validate       JSON parse → Zod schema check
+                               7 dimensions, typed signals, char limits
+   5  Compute verdict          overallScore = Σ(score × weight)
+                               Ship | Refine | Skip  (deterministic)
+                               confidence  = f(score, spread, evidence)
+   6  Return DecisionResult
+        │
+        ▼
+  Browser (React)
+  ──────────────────────────────────────────────────────
+  Verdict card  ·  Scorecard  ·  Risks  ·  Validation gaps
+  Suggested Direction panel   (Refine verdicts only)
+  Copy to Markdown
+```
+
+**Key design decisions:**
+
+- **The model does not choose the verdict.** Claude scores dimensions; the server applies the weighted formula and emits `ship`, `refine`, or `skip` deterministically. This makes the verdict auditable and reproducible.
+- **Strict output schema.** Model output is rejected if it fails Zod validation — the UI never renders partial or structurally incorrect data. String-length limits, enum constraints, and array bounds are enforced before the result is assembled.
+- **Single process in development.** Frontend and API run on the same port — no separate backend to start. In production, the API deploys as a Vercel serverless function with no code changes.
+- **Prompt files are hot-reloadable.** Editing any prompt file takes effect on the next evaluation without restarting the server.
+
+---
+
 ## How Evaluation Works
 
 ### Verdicts
@@ -390,7 +387,7 @@ Refine →  everything else
 
 ### Confidence Score
 
-A second server-computed metric on a 0–100 scale:
+A second server-computed metric on a 0–100 scale reflecting how decisive the evaluation is:
 
 ```
 confidence = overallScore × 0.6
@@ -398,7 +395,7 @@ confidence = overallScore × 0.6
            + evidenceQuality × 0.15
 ```
 
-`spread` is the standard deviation of all dimension scores — high spread means the idea is strong in some areas and critically weak in others, reducing confidence. `evidenceQuality` is the fraction of signals that are `positive` or `negative` (rather than `unknown`), reflecting how much the submission gives the model to work with.
+`spread` is the standard deviation of dimension scores — high spread means the idea is strong in some areas and critically weak in others, reducing confidence. `evidenceQuality` is the fraction of signals that are `positive` or `negative` (rather than `unknown`), reflecting how much the submission gives the model to work with.
 
 ### Dimension Scores
 
@@ -542,7 +539,7 @@ ship-or-skip/
 
 ### Vercel (recommended)
 
-`api/evaluate.ts` exports a `default` handler with the Node.js `(IncomingMessage, ServerResponse) => Promise<void>` signature, which Vercel's Node.js runtime recognises automatically.
+`api/evaluate.ts` exports a standard Node.js handler that Vercel's runtime recognises automatically.
 
 ```bash
 # Build the frontend assets
@@ -564,51 +561,41 @@ Set the following environment variables in the Vercel project dashboard (Project
 
 ### Other platforms
 
-Any platform that serves static files and runs Node.js serverless functions is compatible. Point the platform's function runner at `api/evaluate.ts` and set the same four environment variables.
+Any platform that serves static files and runs Node.js serverless functions is compatible. Point the platform's function runner at `api/evaluate.ts` and set the same environment variables.
 
 ---
 
 ## Troubleshooting
 
-### The app shows mock results even though I set `USE_MOCK_EVALUATIONS=false`
+### Mock results showing even with `USE_MOCK_EVALUATIONS=false`
 
 1. Confirm the variable is in `.env.local`, not `.env` — Vite loads `.env.local` with override priority.
 2. The value must be the exact string `false`. An empty string, `0`, or `"true"` all activate mock mode.
-3. Restart the dev server after editing `.env.local`. Vite reads environment files at startup, not per-request.
+3. Restart the dev server after editing `.env.local`.
 
----
+### `schema_violation: Model output failed validation`
 
-### Evaluation fails with `schema_violation: Model output failed validation`
-
-The model returned a response that did not match the Zod schema. Check the terminal for the `PRE-VALIDATION FIELD AUDIT` block, which logs every top-level field and its value before validation runs.
+The model returned a response that did not match the Zod schema. Check the terminal for the `PRE-VALIDATION FIELD AUDIT` block, which logs every top-level field before validation runs.
 
 Common causes:
 
-- A dimension `id` in the model response does not match the mode's rubric IDs (see the **Dimension IDs** section in `prompts/system.md`)
+- A dimension `id` in the model response does not match the mode's rubric IDs (see `prompts/system.md`)
 - A string field exceeds its character limit
-- Prompt edits have not taken effect — restart the dev server to reload `.md` files fresh
+- Prompt edits have not taken effect — restart the dev server to reload prompt files
 
----
-
-### Evaluation fails with `upstream_error: Gateway returned 4xx`
+### `upstream_error: Gateway returned 4xx`
 
 - Verify `ANTHROPIC_API_KEY` is valid and has available credits at [console.anthropic.com](https://console.anthropic.com).
-- If using a custom `ANTHROPIC_BASE_URL`, confirm the gateway is reachable and accepts `POST /v1/chat/completions` with `role:"system"` messages.
+- If using a custom `ANTHROPIC_BASE_URL`, confirm the gateway is reachable and accepts the expected request format.
 - Confirm `ANTHROPIC_MODEL` names a model available on your key.
-
----
 
 ### Rate limit errors from the app itself
 
-The evaluation handler enforces **10 requests per 5 minutes per IP address** in memory. Restarting the dev server resets the counter. In production on Vercel, each function invocation is a fresh process so the limit applies per cold start.
-
----
+The evaluation handler enforces **10 requests per 5 minutes per IP address** in memory. Restarting the dev server resets the counter. In production on Vercel, the limit applies per cold start.
 
 ### Stale results being returned
 
-The server caches results by `(mode, idea)` for 24 hours in memory. Restarting the dev server clears the cache. For production on Vercel, the in-memory cache does not persist between function invocations.
-
----
+The server caches results by `(mode, idea)` for 24 hours in memory. Restarting the dev server clears the cache. On Vercel, the in-memory cache does not persist between function invocations.
 
 ### TypeScript errors after pulling changes
 
@@ -616,8 +603,6 @@ The server caches results by `(mode, idea)` for 24 hours in memory. Restarting t
 npm install       # in case new dependencies were added
 npx tsc --noEmit  # verify the full type graph compiles cleanly
 ```
-
----
 
 ### ESLint errors blocking the build
 
