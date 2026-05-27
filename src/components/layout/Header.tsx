@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import markUrl from '../../assets/mark.svg'
 import type { EvalMode } from '../../hooks/useEvaluation'
 
@@ -24,7 +25,7 @@ export function Header({ dark, toggleDark, evalMode, onEvalModeChange }: HeaderP
     <header className="border-b border-neutral-200 bg-white dark:border-surface-border dark:bg-surface-0">
       <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-3.5">
         {/* Brand */}
-        <div className="flex items-center gap-3">
+        <Link to="/" className="flex items-center gap-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 rounded-sm">
           <img
             src={markUrl}
             alt=""
@@ -36,7 +37,7 @@ export function Header({ dark, toggleDark, evalMode, onEvalModeChange }: HeaderP
           <span className="text-[15px] font-semibold tracking-tight text-neutral-900 dark:text-neutral-100">
             Ship or Skip
           </span>
-        </div>
+        </Link>
 
         {/* Right side controls */}
         <div className="flex items-center gap-2">
