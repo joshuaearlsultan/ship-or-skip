@@ -141,6 +141,9 @@ export const shipFeatureMock: DecisionResult = {
   },
 }
 
+// Retained as a test fixture. Not used by mock mode or the demo page.
+// Represents a concept-mode Refine result (overallScore 56, confidence 58).
+// The canonical concept-mode example is aiFirstSkipMock in demoExamples.ts.
 export const refineConceptMock: DecisionResult = {
   verdict: 'refine',
   confidence: 58,

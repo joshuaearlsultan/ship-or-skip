@@ -1,6 +1,6 @@
 import type { IdeaMode } from '../types/request'
 import type { DecisionResult } from '../types/decision'
-import { shipFeatureMock } from './mockResults'
+import { refineChangeMock, shipFeatureMock, skipFeatureMock } from './mockResults'
 
 export interface DemoExample {
   id: string
@@ -18,7 +18,7 @@ export interface DemoExample {
 // Feature mode. Revenue signal is real but implementation scope is unquantified
 // and a readiness baseline is missing. overallScore ≈ 61, verdict: refine.
 
-const soc2RefineMock: DecisionResult = {
+export const soc2RefineMock: DecisionResult = {
   verdict: 'refine',
   confidence: 68,
   mode: 'feature',
@@ -218,7 +218,7 @@ const soc2RefineMock: DecisionResult = {
 // Concept mode. No customer evidence anchors the pivot; positioning is
 // undifferentiated; scope is untestable. overallScore ≈ 36, verdict: skip.
 
-const aiFirstSkipMock: DecisionResult = {
+export const aiFirstSkipMock: DecisionResult = {
   verdict: 'skip',
   confidence: 81,
   mode: 'concept',
@@ -398,6 +398,22 @@ export const DEMO_EXAMPLES: DemoExample[] = [
     idea: 'Pursue SOC2 Type II certification. Several enterprise prospects have stalled in procurement citing our lack of security certification. Two active deals are explicitly conditional on completing the audit.',
     mode: 'feature',
     result: soc2RefineMock,
+  },
+  {
+    id: 'social-feed',
+    title: 'Social Feed',
+    rationale: 'No validated problem or demand evidence',
+    idea: 'Add a social feed so users can share progress and increase engagement.',
+    mode: 'feature',
+    result: skipFeatureMock,
+  },
+  {
+    id: 'remove-comments',
+    title: 'Remove Comments',
+    rationale: 'Usage is low but affected users are unquantified',
+    idea: 'Remove the per-row comments thread from the dashboard. Usage is below 2% and it complicates the data layer.',
+    mode: 'change',
+    result: refineChangeMock,
   },
   {
     id: 'ai-first-pivot',

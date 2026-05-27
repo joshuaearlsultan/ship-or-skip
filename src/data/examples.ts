@@ -1,11 +1,7 @@
 import type { IdeaMode } from '../types/request'
 import type { DecisionResult } from '../types/decision'
-import {
-  refineChangeMock,
-  refineConceptMock,
-  shipFeatureMock,
-  skipFeatureMock,
-} from './mockResults'
+import { refineChangeMock, shipFeatureMock, skipFeatureMock } from './mockResults'
+import { aiFirstSkipMock, soc2RefineMock } from './demoExamples'
 
 export interface Example {
   id: string
@@ -23,6 +19,13 @@ export const EXAMPLES: Example[] = [
     preview: 'Bulk CSV export — validated enterprise request',
   },
   {
+    id: 'feature-soc2',
+    mode: 'feature',
+    idea:
+      'Pursue SOC2 Type II certification. Several enterprise prospects have stalled in procurement citing our lack of security certification. Two active deals are explicitly conditional on completing the audit.',
+    preview: 'SOC2 compliance — enterprise procurement blocker',
+  },
+  {
     id: 'feature-social-feed',
     mode: 'feature',
     idea:
@@ -33,8 +36,8 @@ export const EXAMPLES: Example[] = [
     id: 'concept-ai-first',
     mode: 'concept',
     idea:
-      'Pivot the roadmap to AI-first: every existing feature should be reimagined as an AI workflow.',
-    preview: 'Pivot roadmap to AI-first',
+      'Pivot the entire product roadmap to be AI-first. Every existing feature should be reimagined as an AI-powered workflow. We should position as the AI-native alternative in the category.',
+    preview: 'AI-first roadmap pivot',
   },
   {
     id: 'change-remove-comments',
@@ -55,14 +58,27 @@ export function resolveMockResult(
 ): DecisionResult {
   const lower = idea.toLowerCase()
 
+  // Concept mode always resolves to the canonical AI-first Skip example
   if (mode === 'concept') {
-    return withMode(refineConceptMock, mode)
+    return withMode(aiFirstSkipMock, mode)
   }
 
+  // Social feed → Skip (feature-mode Skip example retained for keyword matching)
   if (lower.includes('social') || lower.includes('feed')) {
     return withMode(skipFeatureMock, mode)
   }
 
+  // SOC2 / compliance → canonical Refine example
+  if (
+    lower.includes('soc2') ||
+    lower.includes('soc 2') ||
+    lower.includes('compliance') ||
+    lower.includes('certification')
+  ) {
+    return withMode(soc2RefineMock, mode)
+  }
+
+  // CSV / export → canonical Ship example
   if (
     lower.includes('export') ||
     lower.includes('csv') ||

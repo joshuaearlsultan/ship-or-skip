@@ -83,7 +83,7 @@ Most product teams make build-or-kill decisions informally: in Slack threads, in
 | **Refine recommendations**  | When a verdict is Refine, the evaluation includes named weaknesses, targeted improvements, and a specific re-evaluation trigger |
 | **Three evaluation modes**  | Feature Idea, Product Change, Concept — each with a distinct 7-dimension rubric                                                 |
 | **Copy to Markdown**        | One-click export of the full evaluation including scorecard, risks, and validation gaps                                         |
-| **Mock mode**               | Full UI test without an API key; three pre-built mock results cover Ship, Refine, and Skip                                      |
+| **Mock mode**               | Full UI test without an API key; five pre-built mock results cover all three modes and all three verdict outcomes                |
 | **Dark mode**               | Persists to `localStorage`; respects `prefers-color-scheme` on first visit                                                      |
 | **In-memory result cache**  | Identical `(mode, idea)` pairs return cached results for 24 hours, avoiding redundant API calls                                 |
 
@@ -250,24 +250,17 @@ npm run lint      # ESLint check across all source files
 
 ## Example Inputs
 
-Three examples — one per verdict. Paste each into the **Feature Idea** tab and click **Evaluate**.
-Exact dimension scores vary between runs; the model evaluates each submission independently.
-Verdicts should remain consistent for these inputs.
+Three canonical examples — one per verdict outcome. Each maps to the same pre-built result shown on the [Demo page](/demo).
+Exact dimension scores vary in live mode; verdicts should remain consistent for these inputs.
 
 ---
 
-### Example 1 — Ship
+### Example 1 — Ship · Feature Idea tab
 
 ```
-Add CSV export to the analytics dashboard.
-
-18 enterprise customers requested it.
-3 active deals are blocked.
-
-Existing reporting APIs can be reused.
-
-Maximum export size requirements are unknown.
-Security and permission requirements are not yet defined.
+Add bulk CSV export to the reporting dashboard. 18 enterprise customers have asked
+for it in support tickets over the last quarter; three said it is blocking
+procurement sign-off.
 ```
 
 **Expected verdict: Ship**
@@ -276,37 +269,31 @@ Validated demand with direct revenue linkage and a usable implementation path. T
 
 ---
 
-### Example 2 — Refine
+### Example 2 — Refine · Feature Idea tab
 
 ```
-Add SOC2 compliance support.
-
-Only 2 customers have requested it directly.
-
-Sales reports that the lack of SOC2 blocks enterprise deals worth $500k ARR.
-
-Unknown whether certification requires product changes or only operational controls.
-
-Compliance expertise does not currently exist in-house.
+Pursue SOC2 Type II certification. Several enterprise prospects have stalled in
+procurement citing our lack of security certification. Two active deals are
+explicitly conditional on completing the audit.
 ```
 
 **Expected verdict: Refine**
 
-Potentially high-value opportunity but scope, cost, expertise requirements, and true demand are all unresolved. The opportunity warrants investigation before committing.
+Revenue signal is real but scope, cost, and timeline are unspecified. A readiness assessment is required before any commitment.
 
 ---
 
-### Example 3 — Skip
+### Example 3 — Skip · Concept tab
 
 ```
-Add a social feed so users can share progress and follow each other.
-
-Goal: increase engagement.
+Pivot the entire product roadmap to be AI-first. Every existing feature should be
+reimagined as an AI-powered workflow. We should position as the AI-native
+alternative in the category.
 ```
 
 **Expected verdict: Skip**
 
-No validated user problem, no evidence of demand, and the feature introduces ongoing moderation and operational burden with no named benefit to users.
+No customer evidence anchors the pivot, the scope is total-roadmap and untestable, and "AI-first" is undifferentiated positioning shared by every competitor.
 
 ---
 
@@ -314,7 +301,7 @@ No validated user problem, no evidence of demand, and the feature introduces ong
 
 Ship or Skip supports three evaluation modes. Switch tabs in the app to use them.
 
-### Product Change
+### Product Change tab
 
 ```
 Remove the per-row comments thread from the dashboard. Usage telemetry shows fewer
@@ -326,22 +313,8 @@ enterprise customers currently rely on it.
 
 Usage is low, but affected users, migration impact, and reversibility remain unknown.
 
----
-
-### Concept
-
-```
-Pivot the entire roadmap to AI-first: every existing feature should be reimagined
-as an AI workflow.
-```
-
-**Expected verdict: Skip**
-
-Broad strategic direction with no customer evidence, bounded experiment, or defensible differentiation.
-
----
-
-> These examples intentionally demonstrate different verdict outcomes and evaluation modes. Exact scores may vary between runs, but verdicts should remain broadly consistent for the same inputs.
+> The Concept tab example is covered by **Example 3** above (AI-first Roadmap Pivot → Skip).
+> Exact scores may vary between runs, but verdicts should remain consistent for the same inputs.
 
 ---
 
