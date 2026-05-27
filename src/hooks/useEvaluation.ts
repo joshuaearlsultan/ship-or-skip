@@ -13,6 +13,7 @@ export type EvaluationState =
   | { status: 'loading'; request: EvaluationRequest }
   | { status: 'ready'; request: EvaluationRequest; result: DecisionResult; fromCache: boolean }
   | { status: 'error'; request: EvaluationRequest; error: ApiError }
+  | { status: 'mock-blocked' }
 
 export function useEvaluation() {
   const [state, setState] = useState<EvaluationState>({ status: 'idle' })
@@ -26,7 +27,7 @@ export function useEvaluation() {
     setEvalMode(mode)
   }, [])
 
-  const run = useCallback(async (request: EvaluationRequest) => {
+  const run = useCallback(async (request: EvaluationRequest, options?: { fromExample?: boolean }) => {
     const trimmed = request.idea.trim()
     if (trimmed.length === 0) {
       setState({
@@ -42,6 +43,12 @@ export function useEvaluation() {
 
     // ── Mock mode: resolve locally, no network call ────────────────────────
     if (mode === 'mock') {
+      // Only built-in examples are supported in Mock Mode. Arbitrary text is
+      // blocked immediately — no loading state, no delay.
+      if (!options?.fromExample) {
+        setState({ status: 'mock-blocked' })
+        return
+      }
       setState({ status: 'loading', request: activeRequest })
       // Brief pause so the skeleton loading state is visible
       await new Promise<void>((resolve) => setTimeout(resolve, 700))

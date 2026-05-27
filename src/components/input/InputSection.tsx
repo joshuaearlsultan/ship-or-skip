@@ -8,7 +8,7 @@ interface InputSectionProps {
   busy: boolean
   idea: string
   onIdeaChange: (value: string) => void
-  onRun: (idea: string, mode: IdeaMode) => void
+  onRun: (idea: string, mode: IdeaMode, fromExample?: boolean) => void
   onModeChange?: (mode: IdeaMode) => void
   textareaRef?: React.RefObject<HTMLTextAreaElement | null>
 }
@@ -40,7 +40,7 @@ export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, te
     const next = examples[exampleIndex % examples.length]
     onIdeaChange(next.idea)
     setExampleIndex((i) => i + 1)
-    onRun(next.idea.trim(), mode)
+    onRun(next.idea.trim(), mode, true)
   }
 
   function handleSubmit(event: React.FormEvent) {

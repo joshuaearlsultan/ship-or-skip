@@ -21,10 +21,12 @@ interface ResultPanelProps {
   state: EvaluationState
   onReset?: () => void
   onSwitchToMock?: () => void
+  onSwitchToClaude?: () => void
 }
 
-export function ResultPanel({ state, onReset, onSwitchToMock }: ResultPanelProps) {
+export function ResultPanel({ state, onReset, onSwitchToMock, onSwitchToClaude }: ResultPanelProps) {
   if (state.status === 'idle') return <EmptyState />
+  if (state.status === 'mock-blocked') return <MockBlockedState onSwitchToClaude={onSwitchToClaude} />
   if (state.status === 'loading') return <LoadingState />
   if (state.status === 'error')
     return <ErrorState error={state.error} onSwitchToMock={onSwitchToMock} />
@@ -61,6 +63,31 @@ function EmptyState() {
         </span>{' '}
         to run a sample evaluation.
       </p>
+    </div>
+  )
+}
+
+function MockBlockedState({ onSwitchToClaude }: { onSwitchToClaude?: () => void }) {
+  return (
+    <div className="rounded-xl border border-dashed border-neutral-200 bg-white p-8 dark:border-surface-border dark:bg-surface-1">
+      <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        Mock Mode only supports the built-in example decisions.
+      </p>
+      <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-500">
+        To evaluate your own idea, switch to Claude Mode.
+      </p>
+      <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-500">
+        Or use Try Example to explore Ship, Refine, and Skip outcomes without consuming AI tokens.
+      </p>
+      {onSwitchToClaude ? (
+        <button
+          type="button"
+          onClick={onSwitchToClaude}
+          className="mt-4 rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white"
+        >
+          Switch to Claude Mode
+        </button>
+      ) : null}
     </div>
   )
 }

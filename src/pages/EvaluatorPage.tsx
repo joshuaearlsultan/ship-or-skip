@@ -17,8 +17,13 @@ export function EvaluatorPage({ dark, toggleDark }: EvaluatorPageProps) {
   const [idea, setIdea] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  function handleRun(idea: string, mode: IdeaMode) {
-    void run({ idea, mode })
+  function handleRun(idea: string, mode: IdeaMode, fromExample?: boolean) {
+    void run({ idea, mode }, { fromExample })
+  }
+
+  function handleSwitchToClaude() {
+    reset()
+    setEvalMode('claude')
   }
 
   function handleModeChange() {
@@ -52,6 +57,7 @@ export function EvaluatorPage({ dark, toggleDark }: EvaluatorPageProps) {
           state={state}
           onReset={handleReset}
           onSwitchToMock={() => setEvalMode('mock')}
+          onSwitchToClaude={handleSwitchToClaude}
         />
       </main>
     </div>
