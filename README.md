@@ -7,7 +7,7 @@ A pre-build decision engine for product teams. Submit a feature idea, a product 
 ## Quick Start
 
 ```bash
-git clone https://github.com/<your-org>/ship-or-skip.git
+git clone https://github.com/joshuaearlsultan/ship-or-skip.git
 cd ship-or-skip
 npm install
 ```
@@ -74,18 +74,18 @@ Most product teams make build-or-kill decisions informally: in Slack threads, in
 
 ## Features
 
-| Feature | Description |
-|---|---|
-| **AI-powered evaluation** | Claude scores 7 weighted dimensions per mode, guided by a structured rubric and strict output schema |
-| **Three verdicts** | Ship, Refine, or Skip — computed deterministically from dimension scores, never from model opinion |
-| **Risk identification** | 2–5 named risks per evaluation, each linked to a specific rubric dimension and rated high / medium / low |
-| **Validation gap analysis** | Missing evidence surfaces as concrete questions with a `whyItMatters` explanation and a `howToCheck` action |
-| **Refine recommendations** | When a verdict is Refine, the evaluation includes named weaknesses, targeted improvements, and a specific re-evaluation trigger |
-| **Three evaluation modes** | Feature Idea, Product Change, Concept — each with a distinct 7-dimension rubric |
-| **Copy to Markdown** | One-click export of the full evaluation including scorecard, risks, and validation gaps |
-| **Mock mode** | Full UI test without an API key; three pre-built mock results cover Ship, Refine, and Skip |
-| **Dark mode** | Persists to `localStorage`; respects `prefers-color-scheme` on first visit |
-| **In-memory result cache** | Identical `(mode, idea)` pairs return cached results for 24 hours, avoiding redundant API calls |
+| Feature                     | Description                                                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| **AI-powered evaluation**   | Claude scores 7 weighted dimensions per mode, guided by a structured rubric and strict output schema                            |
+| **Three verdicts**          | Ship, Refine, or Skip — computed deterministically from dimension scores, never from model opinion                              |
+| **Risk identification**     | 2–5 named risks per evaluation, each linked to a specific rubric dimension and rated high / medium / low                        |
+| **Validation gap analysis** | Missing evidence surfaces as concrete questions with a `whyItMatters` explanation and a `howToCheck` action                     |
+| **Refine recommendations**  | When a verdict is Refine, the evaluation includes named weaknesses, targeted improvements, and a specific re-evaluation trigger |
+| **Three evaluation modes**  | Feature Idea, Product Change, Concept — each with a distinct 7-dimension rubric                                                 |
+| **Copy to Markdown**        | One-click export of the full evaluation including scorecard, risks, and validation gaps                                         |
+| **Mock mode**               | Full UI test without an API key; three pre-built mock results cover Ship, Refine, and Skip                                      |
+| **Dark mode**               | Persists to `localStorage`; respects `prefers-color-scheme` on first visit                                                      |
+| **In-memory result cache**  | Identical `(mode, idea)` pairs return cached results for 24 hours, avoiding redundant API calls                                 |
 
 ---
 
@@ -93,8 +93,8 @@ Most product teams make build-or-kill decisions informally: in Slack threads, in
 
 The app evaluates any product idea across three modes and returns a structured result card with a verdict, dimension scorecard, risks, and validation gaps.
 
-| Ship verdict | Refine verdict | Skip verdict |
-|---|---|---|
+| Ship verdict                              | Refine verdict                                | Skip verdict                                 |
+| ----------------------------------------- | --------------------------------------------- | -------------------------------------------- |
 | High-confidence idea with strong evidence | Direction is plausible but submission is thin | Fundamental problem with evidence or framing |
 
 > **To see it in action:** run `npm run dev` and click **Try Example** on any tab — no API key required. The Feature tab ships the bulk-export example, the Change tab refines the remove-comments example, and the Concept tab skips the AI-first pivot.
@@ -104,22 +104,26 @@ The app evaluates any product idea across three modes and returns a structured r
 ## Technology Stack
 
 ### Frontend
+
 - **React 19** — UI components and state
 - **TypeScript 6** — end-to-end type safety across frontend and API
 - **Tailwind CSS v4** — utility-first styling via the Vite plugin
 - **Vite 8** — dev server, HMR, and production build
 
 ### Backend
+
 - **Vite SSR middleware** — `api/evaluate.ts` runs inside Vite's module graph; prompt file edits hot-reload without a server restart
 - **Zod 4** — request validation and model output schema enforcement
 - **Node.js** — serverless-compatible handler in `api/evaluate.ts`
 
 ### AI Integration
+
 - **Anthropic Claude** — model is configurable via `ANTHROPIC_MODEL`; defaults to `claude-opus-4-5`
 - **Plain HTTP (`fetch`)** — sends requests to `/v1/chat/completions` with the system prompt as a `role:"system"` message
 - **Structured prompts** — `prompts/system.md` + mode-specific `prompts/{feature,change,concept}.md`, each containing a complete 7-dimension output example
 
 ### Deployment
+
 - **Vercel** — `api/evaluate.ts` exports a standard Node.js handler and runs as a serverless function
 - Static frontend assets served from `dist/` after `npm run build`
 
@@ -178,7 +182,7 @@ Every evaluation follows a single linear path from user input to rendered result
 ## Installation
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/joshuaearlsultan/ship-or-skip.git
 cd ship-or-skip
 npm install
 ```
@@ -193,12 +197,12 @@ Copy `.env.example` to `.env.local` before running the dev server. `.env.local` 
 cp .env.example .env.local
 ```
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `ANTHROPIC_API_KEY` | **Yes** (live mode) | — | Your Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com). Not needed when running in mock mode. |
-| `ANTHROPIC_BASE_URL` | No | `https://api.anthropic.com` | Override the API base URL. Use this to point at a custom gateway or proxy. The application calls `/v1/chat/completions` on this base. |
-| `ANTHROPIC_MODEL` | No | `claude-opus-4-5` | The model ID to request. Passed as the `model` field. Any model available on your key is valid. |
-| `USE_MOCK_EVALUATIONS` | No | `true` (mock on) | Set to exactly `"false"` to make live API calls. Any other value — including absent — keeps mock mode active. The app never calls the API by accident. |
+| Variable               | Required            | Default                     | Description                                                                                                                                            |
+| ---------------------- | ------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ANTHROPIC_API_KEY`    | **Yes** (live mode) | —                           | Your Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com). Not needed when running in mock mode.                       |
+| `ANTHROPIC_BASE_URL`   | No                  | `https://api.anthropic.com` | Override the API base URL. Use this to point at a custom gateway or proxy. The application calls `/v1/chat/completions` on this base.                  |
+| `ANTHROPIC_MODEL`      | No                  | `claude-opus-4-5`           | The model ID to request. Passed as the `model` field. Any model available on your key is valid.                                                        |
+| `USE_MOCK_EVALUATIONS` | No                  | `true` (mock on)            | Set to exactly `"false"` to make live API calls. Any other value — including absent — keeps mock mode active. The app never calls the API by accident. |
 
 ### Example `.env.local` for live mode
 
@@ -246,82 +250,94 @@ npm run lint      # ESLint check across all source files
 
 ## Example Inputs
 
-The following examples demonstrate all three verdict outcomes. Paste any of them into the text area on the **Feature Idea** tab.
+Three examples — one per verdict. Paste each into the **Feature Idea** tab and click **Evaluate**.
+Exact dimension scores vary between runs; the model evaluates each submission independently.
+Verdicts should remain consistent for these inputs.
 
 ---
 
-### Example 1 — Expected verdict: Ship
+### Example 1 — Ship
 
-> Add SAML SSO. Required by 12 enterprise prospects. 4 deals are currently blocked.
+```
+Add CSV export to the analytics dashboard.
 
-**Why it ships:** The idea has a named user segment (enterprise prospects), quantified demand (12 accounts), and a concrete business consequence (4 blocked deals). `evidence-of-need` and `problem-clarity` score high. Implementation scope for SAML is well-understood. Strategic alignment is strong if the product targets enterprise. The weighted overall score clears 72 with no dimension below 45.
+18 enterprise customers requested it.
+3 active deals are blocked.
 
-**What to expect:**
-- High scores on `evidence-of-need`, `problem-clarity`, `strategic-alignment`
-- Moderate score on `implementation-cost` (SAML integration has real scope)
-- `refineRecommendation: null`
-- Risks around IdP compatibility and integration surface area
+Existing reporting APIs can be reused.
 
----
+Maximum export size requirements are unknown.
+Security and permission requirements are not yet defined.
+```
 
-### Example 2 — Expected verdict: Skip
+**Expected verdict: Ship**
 
-> Add a social feed so users can share progress and increase engagement.
-
-**Why it skips:** "Increase engagement" is a vanity metric — it names a desired outcome, not a user problem. No specific friction is described, no users are named, and no evidence of demand is cited. `problem-clarity` and `evidence-of-need` score in the `counter`–`weak` range. With two or more counter-band dimensions or an overall score below 45, the formula returns Skip.
-
-**What to expect:**
-- Low scores on `problem-clarity`, `evidence-of-need`, `user-value`
-- High `missingValidation` count — who is the user, what is the actual friction, is there behavioral evidence?
-- `refineRecommendation: null` (Skip verdict never receives recommendations)
-- Summary leading with the central weakness: no problem statement, no evidence
+Validated demand with direct revenue linkage and a usable implementation path. The unknowns are scoping details, not decision blockers.
 
 ---
 
-### Example 3 — Expected verdict: Refine
+### Example 2 — Refine
 
-> Add an AI onboarding assistant to help new users reach their first success moment faster.
+```
+Add SOC2 compliance support.
 
-**Why it refines:** The direction is plausible — onboarding friction is a legitimate problem category — but the submission is thin. The specific friction is unnamed, "first success moment" is undefined, and no drop-off data is cited. Scores land in the `mixed` band across multiple dimensions. The overall score falls between 45 and 71, producing a Refine verdict.
+Only 2 customers have requested it directly.
 
-**What to expect:**
-- `problem-clarity` and `evidence-of-need` in the `mixed` band (40–59)
-- `solution-fit` moderate — AI assistant is plausible but unvalidated
-- `refineRecommendation` populated with named weaknesses, targeted improvements, and a `reEvaluateWhen` trigger
-- `smallerExperiment`: a non-AI onboarding checklist as a cheaper proxy test
+Sales reports that the lack of SOC2 blocks enterprise deals worth $500k ARR.
 
----
+Unknown whether certification requires product changes or only operational controls.
 
-### Example 4 — Change mode — Expected verdict: Refine
+Compliance expertise does not currently exist in-house.
+```
 
-Switch to the **Product Change** tab before submitting.
+**Expected verdict: Refine**
 
-> Remove the per-row comments thread from the dashboard. Usage telemetry shows fewer than 2% of rows have any comments and the feature adds significant complexity to the data layer.
-
-**Why it refines:** The justification is data-backed (2% usage, documented complexity), but the impact on the users who do rely on comments is unquantified and there is no migration or archival plan for existing data. `existing-user-risk` and `reversibility` land in the `mixed` band. The overall score falls in the Refine range.
-
-**What to expect:**
-- `change-justification` reasonable — telemetry evidence is concrete
-- `reversibility` mixed — deleted comment data is permanent; re-adding requires full rebuild
-- `migration-cost` mixed — no archival plan described
-- `refineRecommendation` populated with a staged-removal suggestion and a data-export prerequisite
-- `reEvaluateWhen`: a data export path is defined and absolute affected-user count is confirmed
+Potentially high-value opportunity but scope, cost, expertise requirements, and true demand are all unresolved. The opportunity warrants investigation before committing.
 
 ---
 
-### Example 5 — Concept mode — Expected verdict: Skip
+### Example 3 — Skip
 
-Switch to the **Concept** tab before submitting.
+```
+Add a social feed so users can share progress and follow each other.
 
-> Pivot the entire roadmap to AI-first: every existing feature should be reimagined as an AI workflow.
+Goal: increase engagement.
+```
 
-**Why it skips:** The concept is scoped as a slogan, not a hypothesis. No bounded experiment is proposed, "AI-first" matches the public messaging of multiple competitors without differentiation, and a whole-roadmap pivot is untestable as a single bet. `testability` and `differentiation` score in the `weak`–`counter` range. The overall score falls below 45, producing a Skip verdict.
+**Expected verdict: Skip**
 
-**What to expect:**
-- `testability` weak — "reimagine every feature" is not a testable scope
-- `differentiation` mixed to weak — undifferentiated from competitor positioning
-- High `missingValidation` count — no anchoring workflow, no competitive thesis, no prototype
-- `refineRecommendation: null` (Skip verdicts do not receive a refine recommendation)
+No validated user problem, no evidence of demand, and the feature introduces ongoing moderation and operational burden with no named benefit to users.
+
+---
+
+## Other Evaluation Modes
+
+Ship or Skip supports three evaluation modes. Switch tabs in the app to use them.
+
+### Product Change
+
+```
+Remove the per-row comments thread from the dashboard. Usage telemetry shows fewer
+than 2% of rows contain comments. The feature increases maintenance burden. No
+enterprise customers currently rely on it.
+```
+
+**Expected verdict: Refine**
+
+The removal is justified by usage data, but the impact on the active minority is unquantified and no migration path exists for existing comment data.
+
+---
+
+### Concept
+
+```
+Pivot the entire roadmap to AI-first: every existing feature should be reimagined
+as an AI workflow.
+```
+
+**Expected verdict: Skip**
+
+Scoped as a slogan rather than a testable hypothesis, with no differentiation from competitors making identical claims and no bounded experiment proposed.
 
 ---
 
@@ -341,11 +357,11 @@ Skip   →  overallScore < 45  OR   counterCount ≥ 2
 Refine →  everything else
 ```
 
-| Verdict | Meaning |
-|---|---|
-| **Ship** | Evidence and feasibility are strong. The idea is worth building. |
+| Verdict    | Meaning                                                                                                                                       |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ship**   | Evidence and feasibility are strong. The idea is worth building.                                                                              |
 | **Refine** | The direction is plausible but the submission is missing information or has fixable weaknesses. Return with more evidence or a smaller scope. |
-| **Skip** | Fundamental problems with problem definition, evidence, or strategic fit. Not worth building in current form. |
+| **Skip**   | Fundamental problems with problem definition, evidence, or strategic fit. Not worth building in current form.                                 |
 
 ### Confidence Score
 
@@ -363,51 +379,51 @@ confidence = overallScore × 0.6
 
 Each dimension is scored 0–100 and bucketed into a band:
 
-| Band | Range | Meaning |
-|---|---|---|
-| Strong | 80–100 | Clear positive signal with concrete evidence |
-| Reasonable | 60–79 | Positive but with caveats or partial evidence |
-| Mixed | 40–59 | Genuinely uncertain; evidence points both ways |
-| Weak | 20–39 | Negative signal; fixable with more information |
-| Counter | 0–19 | Actively argues against building this |
+| Band       | Range  | Meaning                                        |
+| ---------- | ------ | ---------------------------------------------- |
+| Strong     | 80–100 | Clear positive signal with concrete evidence   |
+| Reasonable | 60–79  | Positive but with caveats or partial evidence  |
+| Mixed      | 40–59  | Genuinely uncertain; evidence points both ways |
+| Weak       | 20–39  | Negative signal; fixable with more information |
+| Counter    | 0–19   | Actively argues against building this          |
 
 ### Evaluation Modes and Their Dimensions
 
 **Feature Idea** — Is this new capability worth building?
 
-| Dimension | Weight |
-|---|---|
-| Problem Clarity | 18% |
-| Evidence of Need | 20% |
-| Solution Fit | 15% |
-| User Value | 12% |
-| Implementation Cost | 12% |
-| Strategic Alignment | 10% |
-| Risk Profile | 13% |
+| Dimension           | Weight |
+| ------------------- | ------ |
+| Problem Clarity     | 18%    |
+| Evidence of Need    | 20%    |
+| Solution Fit        | 15%    |
+| User Value          | 12%    |
+| Implementation Cost | 12%    |
+| Strategic Alignment | 10%    |
+| Risk Profile        | 13%    |
 
 **Product Change** — Is this modification an improvement or a regression risk?
 
-| Dimension | Weight |
-|---|---|
-| Change Justification | 18% |
-| Impact Scope | 15% |
-| Existing User Risk | 18% |
-| Reversibility | 12% |
-| Improvement Magnitude | 15% |
-| Migration Cost | 10% |
-| Implementation Complexity | 12% |
+| Dimension                 | Weight |
+| ------------------------- | ------ |
+| Change Justification      | 18%    |
+| Impact Scope              | 15%    |
+| Existing User Risk        | 18%    |
+| Reversibility             | 12%    |
+| Improvement Magnitude     | 15%    |
+| Migration Cost            | 10%    |
+| Implementation Complexity | 12%    |
 
 **Concept** — Is this strategic direction worth committing resources to?
 
-| Dimension | Weight |
-|---|---|
-| Strategic Coherence | 18% |
-| Market Signal | 17% |
-| Differentiation | 13% |
-| Testability | 15% |
-| Resource Demand | 12% |
-| Optionality | 10% |
-| Conviction Strength | 15% |
+| Dimension           | Weight |
+| ------------------- | ------ |
+| Strategic Coherence | 18%    |
+| Market Signal       | 17%    |
+| Differentiation     | 13%    |
+| Testability         | 15%    |
+| Resource Demand     | 12%    |
+| Optionality         | 10%    |
+| Conviction Strength | 15%    |
 
 ### Risks
 
@@ -416,6 +432,7 @@ The model identifies 2–5 risks per evaluation. Each risk has a **severity** (`
 ### Validation Gaps
 
 Every unknown the model cannot resolve from the submission becomes a `missingValidation` entry with:
+
 - **question** — the specific thing that needs answering
 - **whyItMatters** — why this unknown affects the verdict
 - **howToCheck** — a concrete action to resolve it (user interview, data query, A/B test)
@@ -509,11 +526,11 @@ npx vercel --prod
 
 Set the following environment variables in the Vercel project dashboard (Project → Settings → Environment Variables):
 
-| Variable | Value |
-|---|---|
-| `ANTHROPIC_API_KEY` | Your Anthropic API key |
-| `ANTHROPIC_MODEL` | `claude-opus-4-5` (or preferred model) |
-| `USE_MOCK_EVALUATIONS` | `false` |
+| Variable               | Value                                  |
+| ---------------------- | -------------------------------------- |
+| `ANTHROPIC_API_KEY`    | Your Anthropic API key                 |
+| `ANTHROPIC_MODEL`      | `claude-opus-4-5` (or preferred model) |
+| `USE_MOCK_EVALUATIONS` | `false`                                |
 
 `ANTHROPIC_BASE_URL` is only needed if routing through a custom gateway. Leave it unset to use the Anthropic API directly.
 
@@ -538,6 +555,7 @@ Any platform that serves static files and runs Node.js serverless functions is c
 The model returned a response that did not match the Zod schema. Check the terminal for the `PRE-VALIDATION FIELD AUDIT` block, which logs every top-level field and its value before validation runs.
 
 Common causes:
+
 - A dimension `id` in the model response does not match the mode's rubric IDs (see the **Dimension IDs** section in `prompts/system.md`)
 - A string field exceeds its character limit
 - Prompt edits have not taken effect — restart the dev server to reload `.md` files fresh
