@@ -10,7 +10,9 @@ Try Ship or Skip instantly in your browser.
 
 **[→ ship-or-skip-pi.vercel.app](https://ship-or-skip-pi.vercel.app/)**
 
-No sign-up. No API key. Click **Try Example** to explore Ship, Refine, and Skip outcomes across all three modes, or switch to Claude Mode to evaluate your own idea.
+No sign-up. No API key. Click **Try Example** to explore Ship, Refine, and Skip outcomes across all three modes.
+
+The public deployment uses deterministic mock evaluations for stable, zero-cost demo access. Live AI evaluations are fully implemented — see [Quick Start](#quick-start) to run the app with a live Anthropic key.
 
 ---
 
@@ -93,6 +95,8 @@ Click **Copy to Markdown** at the bottom of the result to copy the full evaluati
 
 ## Mock Mode and Claude Mode
 
+Mock Mode is a first-class runtime option, not a development convenience. The app is designed to run correctly in either mode — switching between them requires only an environment variable change.
+
 **Mock Mode** (default) returns one of five pre-built evaluations instantly — no API key, no network call, no tokens consumed. It covers all three modes and all three verdict outcomes. Use it to explore the full result UI before configuring a live key.
 
 In Mock Mode, only the five built-in examples return results. Submitting arbitrary text shows an informational message and prompts switching to Claude Mode.
@@ -100,6 +104,24 @@ In Mock Mode, only the five built-in examples return results. Submitting arbitra
 **Claude Mode** sends the idea to Claude via the Anthropic API. The same evaluation framework applies: Claude scores dimensions, and the server computes the verdict. Results are cached in memory by `(mode, idea)` for the session to avoid duplicate calls.
 
 Switch between modes using the badge in the top-right corner of the evaluator. Switching to Claude Mode shows a confirmation before making any API calls.
+
+---
+
+## Demo Stability & Cost Control
+
+The public deployment at [ship-or-skip-pi.vercel.app](https://ship-or-skip-pi.vercel.app) runs in **mock evaluation mode** by default. This is a deliberate runtime strategy.
+
+**Why the public demo uses deterministic evaluations:**
+
+- **Stable availability** — results load instantly with no dependency on API uptime, cold-start latency, or provider rate limits
+- **Predictable costs** — no tokens consumed on every visit; API credits are reserved for intentional use
+- **Consistent output** — every visitor sees complete, well-formed evaluations regardless of model or network state
+
+**Live AI integration is fully implemented.** The complete evaluation pipeline — Anthropic API call, prompt assembly, Zod schema validation, output sanitization, and deterministic verdict computation — is production-ready in the codebase. Setting `USE_MOCK_EVALUATIONS=false` enables live evaluations with no code changes.
+
+The architecture intentionally supports both runtimes. The provider abstraction layer, the mock fallback, and the configurable environment separation are all production design decisions — not prototypes or placeholders.
+
+To run with a live Anthropic key, see [Quick Start](#quick-start) and [Environment Variables](#environment-variables).
 
 ---
 
@@ -453,9 +475,13 @@ Vercel Serverless Function
 | Safer deployment strategy   | One flag switches providers; no code changes or redeploys needed when rotating credentials             |
 | Provider abstraction        | The evaluation pipeline is identical regardless of which transport is used                             |
 
-### Live evaluations and demo protection
+### Runtime mode and API cost control
 
-When `USE_MOCK_EVALUATIONS=false`, requests are forwarded to the configured AI provider. The API enforces **10 requests per 5 minutes per IP address** in memory to protect Anthropic credits in the public deployment. Mock Mode (`USE_MOCK_EVALUATIONS=true` or unset) returns pre-built results instantly with no API calls — useful for exploring the full UI without consuming tokens.
+`USE_MOCK_EVALUATIONS` controls which runtime is active. Set it to the exact string `"false"` to enable live AI calls; any other value — including absent — keeps mock mode active. The app never calls an AI provider by accident.
+
+When live mode is active (`USE_MOCK_EVALUATIONS=false`), the API enforces **10 requests per 5 minutes per IP address** in memory to guard against API credit exhaustion in shared or public deployments.
+
+Mock mode returns one of five pre-built evaluations instantly for the canonical example inputs — no network call, no tokens, no latency. It is a supported production runtime suitable for demos, cost-controlled deployments, and evaluation UI development.
 
 ---
 
