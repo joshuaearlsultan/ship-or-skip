@@ -6,7 +6,15 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: ".env.local", override: true });
 
+// Expose mock-evaluation state to the client as a compile-time boolean.
+// Derived from USE_MOCK_EVALUATIONS (already loaded above via dotenv).
+// True whenever the value is absent or anything other than the string "false".
+const aiRuntimePaused = process.env.USE_MOCK_EVALUATIONS !== 'false'
+
 export default defineConfig({
+  define: {
+    __AI_RUNTIME_PAUSED__: JSON.stringify(aiRuntimePaused),
+  },
   plugins: [
     react(),
     tailwindcss(),

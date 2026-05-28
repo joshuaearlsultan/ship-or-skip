@@ -3,6 +3,7 @@ import type { IdeaMode } from '../types/request'
 import { Header } from '../components/layout/Header'
 import { InputSection } from '../components/input/InputSection'
 import { ResultPanel } from '../components/result/ResultPanel'
+import { RuntimeStatus } from '../components/feedback/RuntimeStatus'
 import { useEvaluation } from '../hooks/useEvaluation'
 
 interface EvaluatorPageProps {
@@ -53,6 +54,7 @@ export function EvaluatorPage({ dark, toggleDark }: EvaluatorPageProps) {
           onRun={handleRun}
           onModeChange={handleModeChange}
         />
+        <RuntimeStatus evalMode={evalMode} />
         <ResultPanel
           state={state}
           onReset={handleReset}
