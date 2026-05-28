@@ -296,3 +296,71 @@ in `evals/`.
 The framework version is reflected in each prompt's `promptVersion`
 field, e.g. `feature@2026-05-23`, so a stored result can be traced to
 the exact rubric that produced it.
+
+---
+
+## 11. Writing Effective Evaluations
+
+The more evidence your description contains, the more useful the evaluation. Vague descriptions produce low evidence-quality scores and long validation-gap lists.
+
+Include when available:
+
+- Specific users or customer segments ("18 enterprise customers", "3 deals blocked on sign-off")
+- Quantified demand (support ticket counts, feature request volume, survey data)
+- Usage data ("below 2% of rows have comments over the past 90 days")
+- Revenue or business impact ("conditional on completing the audit")
+- Implementation constraints (team size, timeline, technical dependencies)
+
+One sentence with a concrete data point scores better than three paragraphs without one.
+
+---
+
+## 12. Example Inputs
+
+Four canonical examples — one per verdict outcome, covering all three modes. These map to the pre-built results shown in the demo. Exact dimension scores may vary in live mode; verdicts should remain consistent.
+
+### Ship — Feature Idea
+
+```
+Add bulk CSV export to the reporting dashboard. 18 enterprise customers have asked
+for it in support tickets over the last quarter; three said it is blocking
+procurement sign-off.
+```
+
+**Expected verdict: Ship** — Validated demand with direct revenue linkage. Unknowns are scoping details, not decision blockers.
+
+---
+
+### Refine — Feature Idea
+
+```
+Pursue SOC2 Type II certification. Several enterprise prospects have stalled in
+procurement citing our lack of security certification. Two active deals are
+explicitly conditional on completing the audit.
+```
+
+**Expected verdict: Refine** — Revenue signal is real but scope, cost, and timeline are unspecified. A readiness assessment is required before any commitment.
+
+---
+
+### Skip — Concept
+
+```
+Pivot the entire product roadmap to be AI-first. Every existing feature should be
+reimagined as an AI-powered workflow. We should position as the AI-native
+alternative in the category.
+```
+
+**Expected verdict: Skip** — No customer evidence anchors the pivot, the scope is total-roadmap and untestable, and "AI-first" is undifferentiated positioning shared by every competitor.
+
+---
+
+### Refine — Product Change
+
+```
+Remove the per-row comments thread from the dashboard. Usage telemetry shows fewer
+than 2% of rows contain comments. The feature increases maintenance burden. No
+enterprise customers currently rely on it.
+```
+
+**Expected verdict: Refine** — Usage is low, but affected users, migration impact, and reversibility remain unknown.
