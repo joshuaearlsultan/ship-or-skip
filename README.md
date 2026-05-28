@@ -16,12 +16,12 @@ No sign-up. No API key. Click **Try Example** to explore Ship, Refine, and Skip 
 
 ## Screenshots
 
-| Landing page | Demo page |
-| --- | --- |
+| Landing page                                    | Demo page                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------- |
 | ![Landing page](./docs/screenshots/landing.png) | ![Demo page — example decisions](./docs/screenshots/demo.png) |
 
-| Ship verdict | Refine verdict | Skip verdict |
-| --- | --- | --- |
+| Ship verdict                                 | Refine verdict                                   | Skip verdict                                 |
+| -------------------------------------------- | ------------------------------------------------ | -------------------------------------------- |
 | ![Ship](./docs/screenshots/verdict-ship.png) | ![Refine](./docs/screenshots/verdict-refine.png) | ![Skip](./docs/screenshots/verdict-skip.png) |
 
 ![Mock-blocked state](./docs/screenshots/mock-blocked.png)
@@ -85,7 +85,7 @@ Click **Copy to Markdown** at the bottom of the result to copy the full evaluati
 | **Refine recommendations**  | When a verdict is Refine, the evaluation includes named weaknesses, targeted improvements, and a specific re-evaluation trigger |
 | **Three evaluation modes**  | Feature Idea, Product Change, Concept — each with a distinct 7-dimension rubric                                                 |
 | **Copy to Markdown**        | One-click export of the full evaluation including scorecard, risks, and validation gaps                                         |
-| **Mock mode**               | Full UI test without an API key; five pre-built mock results cover all three modes and all three verdict outcomes                |
+| **Mock mode**               | Full UI test without an API key; five pre-built mock results cover all three modes and all three verdict outcomes               |
 | **Dark mode**               | Persists to `localStorage`; respects `prefers-color-scheme` on first visit                                                      |
 | **In-memory result cache**  | Identical `(mode, idea)` pairs return cached results for 24 hours, avoiding redundant API calls                                 |
 
@@ -205,12 +205,14 @@ npm run dev
 # The app starts in Mock Mode — click Try Example for an instant result.
 ```
 
-**Run with live Claude evaluations:**
+**Run with live Claude evaluations (direct Anthropic):**
 
 ```bash
 cp .env.example .env.local
 # Edit .env.local:
-#   ANTHROPIC_API_KEY=sk-ant-api03-...  ← your key from console.anthropic.com
+#   USE_COMPANY_GATEWAY=false
+#   ANTHROPIC_API_KEY=sk-ant-api03-...   ← from console.anthropic.com
+#   ANTHROPIC_MODEL=claude-3-haiku-20240307
 #   USE_MOCK_EVALUATIONS=false
 npm run dev
 ```
@@ -245,23 +247,52 @@ Copy `.env.example` to `.env.local` before running the dev server. `.env.local` 
 cp .env.example .env.local
 ```
 
-| Variable               | Required            | Default                     | Description                                                                                                                                            |
-| ---------------------- | ------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `ANTHROPIC_API_KEY`    | **Yes** (live mode) | —                           | Your Anthropic API key. Get one at [console.anthropic.com](https://console.anthropic.com). Not needed in mock mode.                                    |
-| `ANTHROPIC_BASE_URL`   | No                  | `https://api.anthropic.com` | Override the API base URL. Use this to point at a custom gateway or proxy.                                                                             |
-| `ANTHROPIC_MODEL`      | No                  | `claude-opus-4-5`           | The model ID to use. Any model available on your key is valid.                                                                                         |
-| `USE_MOCK_EVALUATIONS` | No                  | `true` (mock on)            | Set to exactly `"false"` to make live API calls. Any other value — including absent — keeps mock mode active. The app never calls the API by accident. |
+The active provider is selected by `USE_COMPANY_GATEWAY`. See [AI Provider Architecture](#ai-provider-architecture) for full context.
 
-### Example `.env.local` for live mode
+### Local / Internal — `.env.local`
+
+For development using the company gateway:
 
 ```env
-ANTHROPIC_API_KEY=sk-ant-api03-...
-ANTHROPIC_BASE_URL=https://api.anthropic.com
-ANTHROPIC_MODEL=claude-opus-4-5
+USE_COMPANY_GATEWAY=true
+COMPANY_GATEWAY_URL=https://your-gateway-hostname
+COMPANY_GATEWAY_KEY=your-gateway-key
+ANTHROPIC_MODEL=claude-quality
 USE_MOCK_EVALUATIONS=false
 ```
 
-> **Gateway note:** If `ANTHROPIC_BASE_URL` points to a custom proxy, Ship or Skip is compatible with OpenAI-compatible gateways.
+For development using a personal Anthropic key:
+
+```env
+USE_COMPANY_GATEWAY=false
+ANTHROPIC_API_KEY=sk-ant-api03-...
+ANTHROPIC_MODEL=claude-3-haiku-20240307
+USE_MOCK_EVALUATIONS=false
+```
+
+### Public / Vercel — Vercel Environment Variables
+
+Set these in the Vercel project dashboard (Project → Settings → Environment Variables):
+
+| Variable               | Value                     | Notes                           |
+| ---------------------- | ------------------------- | ------------------------------- |
+| `USE_COMPANY_GATEWAY`  | `false`                   | Routes to direct Anthropic API  |
+| `ANTHROPIC_API_KEY`    | `sk-ant-api03-...`        | Your personal Anthropic key     |
+| `ANTHROPIC_MODEL`      | `claude-3-haiku-20240307` | Any model available on your key |
+| `USE_MOCK_EVALUATIONS` | `false`                   | Enables live evaluations        |
+
+### All variables reference
+
+| Variable               | Used when                   | Default (if absent)        |
+| ---------------------- | --------------------------- | -------------------------- |
+| `USE_COMPANY_GATEWAY`  | Always                      | `false` (direct Anthropic) |
+| `COMPANY_GATEWAY_URL`  | `USE_COMPANY_GATEWAY=true`  | —                          |
+| `COMPANY_GATEWAY_KEY`  | `USE_COMPANY_GATEWAY=true`  | —                          |
+| `ANTHROPIC_API_KEY`    | `USE_COMPANY_GATEWAY=false` | —                          |
+| `ANTHROPIC_MODEL`      | Always (live mode)          | `claude-3-haiku-20240307`  |
+| `USE_MOCK_EVALUATIONS` | Always                      | `true` (mock on if unset)  |
+
+**`USE_MOCK_EVALUATIONS`** must be the exact string `"false"` to enable live calls. Any other value — including absent — keeps mock mode active. The app never calls the AI provider by accident.
 
 ---
 
@@ -322,6 +353,20 @@ npm run lint      # ESLint check across all source files
 
 ---
 
+## Technical Highlights
+
+| Highlight                                  | Detail                                                                                                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dual-provider AI abstraction**           | A single evaluation pipeline routes to either a company AI gateway or the Anthropic API directly — switched by one env var, no code changes           |
+| **Structured JSON evaluation pipeline**    | Model output must satisfy a strict Zod schema before any result is assembled; malformed or incomplete responses are rejected at the boundary          |
+| **Zod schema validation**                  | Both inbound requests and outbound model responses are schema-validated; enums, array bounds, and numeric ranges are all enforced server-side         |
+| **Sanitization layer before validation**   | Prose fields are whitespace-normalised and length-capped before Zod runs, so slightly verbose model output doesn't cause brittle validation failures  |
+| **Deterministic verdict computation**      | `Ship`, `Refine`, or `Skip` is computed from a weighted formula over 7 dimension scores — the model cannot override or influence the outcome directly |
+| **Mock evaluation fallback**               | Five pre-built results cover all three modes and all three verdict outcomes; the full UI runs without any API key or network access                   |
+| **Production-safe environment separation** | Gateway credentials and Anthropic keys live in separate env configs; neither deployment environment has access to the other's secrets                 |
+
+---
+
 ## Architecture Overview
 
 Every evaluation follows a single linear path from user input to rendered result.
@@ -360,6 +405,57 @@ Every evaluation follows a single linear path from user input to rendered result
 - **Strict output schema.** Model output is rejected if it fails Zod validation — the UI never renders partial or structurally incorrect data. String-length limits, enum constraints, and array bounds are enforced before the result is assembled.
 - **Single process in development.** Frontend and API run on the same port — no separate backend to start. In production, the API deploys as a Vercel serverless function with no code changes.
 - **Prompt files are hot-reloadable.** Editing any prompt file takes effect on the next evaluation without restarting the server.
+- **Configurable AI provider.** The API call layer is abstracted behind a provider flag — gateway mode and direct Anthropic mode use identical evaluation logic and produce identical output schemas.
+
+---
+
+## AI Provider Architecture
+
+Ship or Skip supports two AI provider modes controlled by `USE_COMPANY_GATEWAY`. Both modes produce identical evaluation output — only the transport layer differs.
+
+### Local / Internal Mode (`USE_COMPANY_GATEWAY=true`)
+
+For internal development and enterprise environments that route AI traffic through a managed gateway.
+
+```
+Developer Machine
+  └─→ Company AI Gateway   /v1/chat/completions  (OpenAI-compatible)
+        └─→ Claude
+```
+
+- Uses `COMPANY_GATEWAY_URL` and `COMPANY_GATEWAY_KEY`
+- OpenAI-compatible request format (`system` in messages array)
+- Model name is a gateway alias (e.g. `claude-quality`)
+- Suited for access control, audit logging, and corporate network policies
+
+### Public / Vercel Mode (`USE_COMPANY_GATEWAY=false`)
+
+For the live public demo and judge access — no corporate network dependency.
+
+```
+Vercel Serverless Function
+  └─→ Direct Anthropic API   /v1/messages  (Anthropic native)
+        └─→ Claude
+```
+
+- Uses `ANTHROPIC_API_KEY` with `anthropic-version: 2023-06-01`
+- Anthropic native request format (`system` as top-level field)
+- Model name is a standard Anthropic model (e.g. `claude-3-haiku-20240307`)
+- Suited for public deployment without any gateway dependency
+
+### Why this separation exists
+
+| Concern                     | How it's addressed                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Enterprise compatibility    | Internal teams can keep all AI traffic inside a managed gateway                                        |
+| Public deployment stability | The Vercel deployment has no dependency on a corporate network or gateway                              |
+| Environment isolation       | Gateway credentials never reach the public deployment; Anthropic keys never appear in internal configs |
+| Safer deployment strategy   | One flag switches providers; no code changes or redeploys needed when rotating credentials             |
+| Provider abstraction        | The evaluation pipeline is identical regardless of which transport is used                             |
+
+### Live evaluations and demo protection
+
+When `USE_MOCK_EVALUATIONS=false`, requests are forwarded to the configured AI provider. The API enforces **10 requests per 5 minutes per IP address** in memory to protect Anthropic credits in the public deployment. Mock Mode (`USE_MOCK_EVALUATIONS=true` or unset) returns pre-built results instantly with no API calls — useful for exploring the full UI without consuming tokens.
 
 ---
 
@@ -470,6 +566,7 @@ ship-or-skip/
 │   ├── evaluate.ts        # Evaluation handler; Vercel serverless function entry point
 │   ├── prompts.ts         # Loads and assembles system + mode prompt files
 │   ├── rubrics.ts         # Dimension definitions and weights per mode
+│   ├── sanitize.ts        # Output normalisation layer: whitespace collapse + length cap
 │   └── schema.ts          # Zod schemas for request validation and model output
 │
 ├── prompts/
@@ -551,13 +648,14 @@ npx vercel --prod
 
 Set the following environment variables in the Vercel project dashboard (Project → Settings → Environment Variables):
 
-| Variable               | Value                                  |
-| ---------------------- | -------------------------------------- |
-| `ANTHROPIC_API_KEY`    | Your Anthropic API key                 |
-| `ANTHROPIC_MODEL`      | `claude-opus-4-5` (or preferred model) |
-| `USE_MOCK_EVALUATIONS` | `false`                                |
+| Variable               | Value               |
+| ---------------------- | ------------------- |
+| `USE_COMPANY_GATEWAY`  | `false`             |
+| `ANTHROPIC_API_KEY`    | `sk-ant-api03-...`  |
+| `ANTHROPIC_MODEL`      | `claude-sonnet-4-6` |
+| `USE_MOCK_EVALUATIONS` | `false`             |
 
-`ANTHROPIC_BASE_URL` is only needed if routing through a custom gateway. Leave it unset to use the Anthropic API directly.
+Do not set `ANTHROPIC_BASE_URL` — it is not used in direct Anthropic mode. If a stale value exists from a previous config, delete it.
 
 ### Other platforms
 
@@ -583,11 +681,18 @@ Common causes:
 - A string field exceeds its character limit
 - Prompt edits have not taken effect — restart the dev server to reload prompt files
 
-### `upstream_error: Gateway returned 4xx`
+### `upstream_error: API returned 4xx`
+
+**Direct Anthropic mode (`USE_COMPANY_GATEWAY=false`):**
 
 - Verify `ANTHROPIC_API_KEY` is valid and has available credits at [console.anthropic.com](https://console.anthropic.com).
-- If using a custom `ANTHROPIC_BASE_URL`, confirm the gateway is reachable and accepts the expected request format.
-- Confirm `ANTHROPIC_MODEL` names a model available on your key.
+- Confirm `ANTHROPIC_MODEL` is a real Anthropic model name (e.g. `claude-sonnet-4-6`, not a gateway alias).
+- Check that `ANTHROPIC_BASE_URL` is **not** set in Vercel — a stale gateway URL here causes every request to return 404.
+
+**Company gateway mode (`USE_COMPANY_GATEWAY=true`):**
+
+- Confirm `COMPANY_GATEWAY_URL` is reachable and `COMPANY_GATEWAY_KEY` is valid.
+- Confirm `ANTHROPIC_MODEL` matches a model alias configured on the gateway.
 
 ### Rate limit errors from the app itself
 
@@ -636,7 +741,7 @@ Run through this list before submitting the repository.
 ### Documentation
 
 - [ ] Repository URL is correct in the `## Quick Start` section
-- [ ] `ANTHROPIC_MODEL` in `.env.example` names a model available on the key being used for testing
+- [ ] `ANTHROPIC_MODEL` in `.env.example` names a model available on the Anthropic key being used for testing
 - [ ] Troubleshooting section reflects any issues encountered during final test run
 
 ### Pre-submission verification commands
