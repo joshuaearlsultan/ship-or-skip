@@ -319,7 +319,7 @@ export async function handleEvaluate(
   const startMs = Date.now();
   const useGateway = process.env.USE_COMPANY_GATEWAY === "true";
   const modelId = process.env.ANTHROPIC_MODEL ??
-    (useGateway ? "claude-quality" : "claude-3-5-sonnet-20241022");
+    (useGateway ? "claude-quality" : "claude-3-haiku-20240307");
 
   // Mode label used in the user turn so the model never has to infer it.
   const modeLabel: Record<IdeaMode, string> = {
@@ -336,23 +336,28 @@ export async function handleEvaluate(
     `Idea:\n${req.idea}`;
 
   // ── Provider-specific endpoint, headers, and body ────────────────────────
+  //
+  // Anthropic path: endpoint is ALWAYS https://api.anthropic.com/v1/messages.
+  // ANTHROPIC_BASE_URL is intentionally NOT used here — stale env vars from
+  // a previous gateway setup would silently redirect to the wrong host.
+  //
   const apiEndpoint = useGateway
     ? `${process.env.COMPANY_GATEWAY_URL ?? ""}/v1/chat/completions`
-    : `${process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com"}/v1/messages`;
+    : "https://api.anthropic.com/v1/messages";
 
   const requestHeaders: Record<string, string> = useGateway
     ? {
-        "Content-Type": "application/json",
+        "content-type": "application/json",
         "x-api-key": process.env.COMPANY_GATEWAY_KEY ?? "",
       }
     : {
-        "Content-Type": "application/json",
+        "content-type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
         "anthropic-version": "2023-06-01",
       };
 
   // Gateway: system as role:"system" message (OpenAI format)
-  // Anthropic: system is a top-level field; messages is user-only
+  // Anthropic: system is a top-level field; messages array is user-only
   const requestPayload = useGateway
     ? {
         model: modelId,
@@ -369,15 +374,35 @@ export async function handleEvaluate(
         messages: [{ role: "user" as const, content: userMessage }],
       };
 
-  // ── Diagnostic: endpoint + full outbound payload ─────────────────────────
+  // ── Diagnostic: full request details ─────────────────────────────────────
   console.log("[evaluate] ── REQUEST ──────────────────────────────────────");
-  console.log("[evaluate] provider       :", useGateway ? "company-gateway" : "anthropic-direct");
-  console.log("[evaluate] endpoint       :", apiEndpoint);
-  console.log("[evaluate] model          :", modelId);
-  console.log("[evaluate] max_tokens     :", 4096);
-  console.log("[evaluate] prompt version :", promptVersion);
-  console.log("[evaluate] ── OUTBOUND PAYLOAD (FULL) ─────────────────────");
-  console.log(JSON.stringify(requestPayload, null, 2));
+  console.log("[evaluate] provider        :", useGateway ? "company-gateway" : "anthropic-direct");
+  console.log("[evaluate] endpoint        :", apiEndpoint);
+  console.log("[evaluate] model           :", modelId);
+  console.log("[evaluate] max_tokens      :", 4096);
+  console.log("[evaluate] prompt version  :", promptVersion);
+
+  // Log headers — show keys and redacted values so secrets are never logged
+  console.log("[evaluate] ── REQUEST HEADERS ─────────────────────────────");
+  for (const [k, v] of Object.entries(requestHeaders)) {
+    const display = k === "x-api-key"
+      ? (v.length > 8 ? `${v.slice(0, 6)}…${v.slice(-4)} (len=${v.length})` : v.length > 0 ? "SET" : "MISSING")
+      : v;
+    console.log(`[evaluate]   ${k.padEnd(20)} : ${display}`);
+  }
+  console.log("[evaluate] ── OUTBOUND PAYLOAD ────────────────────────────");
+  // Log structure without system/user prompt content (can be very long)
+  const payloadSummary = {
+    ...requestPayload,
+    ...(("system" in requestPayload) ? { system: `[${(requestPayload as { system: string }).system.length} chars]` } : {}),
+    messages: requestPayload.messages.map((m) => ({
+      role: m.role,
+      content: typeof m.content === "string"
+        ? `[${m.content.length} chars]`
+        : m.content,
+    })),
+  };
+  console.log(JSON.stringify(payloadSummary, null, 2));
   console.log("[evaluate] ── END OUTBOUND PAYLOAD ────────────────────────");
 
   let toolInput: unknown;
