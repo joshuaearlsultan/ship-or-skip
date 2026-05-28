@@ -4,9 +4,9 @@ import type {
   EvaluationDimension,
   ScoreBand,
   Verdict,
-} from "../src/types/decision";
-import type { ApiResponse } from "../src/types/api";
-import type { IdeaMode } from "../src/types/request";
+} from "../src/types/decision.js";
+import type { ApiResponse } from "../src/types/api.js";
+import type { IdeaMode } from "../src/types/request.js";
 import {
   EvaluationRequestSchema,
   ToolOutputSchema,

@@ -1,4 +1,4 @@
-import type { IdeaMode } from '../src/types/request'
+import type { IdeaMode } from '../src/types/request.js'
 
 export interface DimensionDef {
   id: string

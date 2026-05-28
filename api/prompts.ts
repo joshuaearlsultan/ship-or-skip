@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import type { IdeaMode } from '../src/types/request'
+import type { IdeaMode } from '../src/types/request.js'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 
