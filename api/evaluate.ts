@@ -215,7 +215,7 @@ function assembleResult(
     missingValidation: output.missingValidation,
     refineRecommendation,
     meta: {
-      model: process.env.ANTHROPIC_MODEL ?? "claude-opus-4-5",
+      model: process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-6",
       latencyMs,
       promptVersion,
     },
@@ -252,12 +252,16 @@ function extractJSON(text: string): unknown {
   if (fenceMatch?.[1]) attempts.push(fenceMatch[1].trim());
 
   // 3. First '{' to last '}' — strips leading prose and trailing text
-  const first = text.indexOf('{');
-  const last  = text.lastIndexOf('}');
+  const first = text.indexOf("{");
+  const last = text.lastIndexOf("}");
   if (first !== -1 && last > first) attempts.push(text.slice(first, last + 1));
 
   for (const candidate of attempts) {
-    try { return JSON.parse(candidate); } catch { /* try next strategy */ }
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      /* try next strategy */
+    }
   }
   return null;
 }
@@ -284,7 +288,7 @@ export async function handleEvaluate(
   const req = parsed.data;
 
   // Mock mode — bypasses Anthropic entirely when USE_MOCK_EVALUATIONS != "false"
-  const isMockMode = process.env.USE_MOCK_EVALUATIONS !== "false"
+  const isMockMode = process.env.USE_MOCK_EVALUATIONS !== "false";
   if (isMockMode) {
     return { ok: true, data: resolveMockResult(req.mode, req.idea) };
   }
@@ -319,8 +323,9 @@ export async function handleEvaluate(
   // ─────────────────────────────────────────────────────────────────────────
   const startMs = Date.now();
   const useGateway = process.env.USE_COMPANY_GATEWAY === "true";
-  const modelId = process.env.ANTHROPIC_MODEL ??
-    (useGateway ? "claude-quality" : "claude-3-haiku-20240307");
+  const modelId =
+    process.env.ANTHROPIC_MODEL ??
+    (useGateway ? "claude-quality" : "claude-sonnet-4-6");
 
   // Mode label used in the user turn so the model never has to infer it.
   const modeLabel: Record<IdeaMode, string> = {
@@ -365,7 +370,7 @@ export async function handleEvaluate(
         max_tokens: 4096,
         messages: [
           { role: "system" as const, content: systemPrompt },
-          { role: "user"   as const, content: userMessage  },
+          { role: "user" as const, content: userMessage },
         ],
       }
     : {
@@ -377,7 +382,10 @@ export async function handleEvaluate(
 
   // ── Diagnostic: full request details ─────────────────────────────────────
   console.log("[evaluate] ── REQUEST ──────────────────────────────────────");
-  console.log("[evaluate] provider        :", useGateway ? "company-gateway" : "anthropic-direct");
+  console.log(
+    "[evaluate] provider        :",
+    useGateway ? "company-gateway" : "anthropic-direct",
+  );
   console.log("[evaluate] endpoint        :", apiEndpoint);
   console.log("[evaluate] model           :", modelId);
   console.log("[evaluate] max_tokens      :", 4096);
@@ -386,21 +394,31 @@ export async function handleEvaluate(
   // Log headers — show keys and redacted values so secrets are never logged
   console.log("[evaluate] ── REQUEST HEADERS ─────────────────────────────");
   for (const [k, v] of Object.entries(requestHeaders)) {
-    const display = k === "x-api-key"
-      ? (v.length > 8 ? `${v.slice(0, 6)}…${v.slice(-4)} (len=${v.length})` : v.length > 0 ? "SET" : "MISSING")
-      : v;
+    const display =
+      k === "x-api-key"
+        ? v.length > 8
+          ? `${v.slice(0, 6)}…${v.slice(-4)} (len=${v.length})`
+          : v.length > 0
+            ? "SET"
+            : "MISSING"
+        : v;
     console.log(`[evaluate]   ${k.padEnd(20)} : ${display}`);
   }
   console.log("[evaluate] ── OUTBOUND PAYLOAD ────────────────────────────");
   // Log structure without system/user prompt content (can be very long)
   const payloadSummary = {
     ...requestPayload,
-    ...(("system" in requestPayload) ? { system: `[${(requestPayload as { system: string }).system.length} chars]` } : {}),
+    ...("system" in requestPayload
+      ? {
+          system: `[${(requestPayload as { system: string }).system.length} chars]`,
+        }
+      : {}),
     messages: requestPayload.messages.map((m) => ({
       role: m.role,
-      content: typeof m.content === "string"
-        ? `[${m.content.length} chars]`
-        : m.content,
+      content:
+        typeof m.content === "string"
+          ? `[${m.content.length} chars]`
+          : m.content,
     })),
   };
   console.log(JSON.stringify(payloadSummary, null, 2));
@@ -420,12 +438,20 @@ export async function handleEvaluate(
     console.log("[evaluate] ── RAW RESPONSE PAYLOAD ────────────────────────");
     console.log(rawBody);
     console.log("[evaluate] ── END RAW RESPONSE PAYLOAD ────────────────────");
-    console.log("[evaluate] HTTP status   :", httpResponse.status, httpResponse.statusText);
+    console.log(
+      "[evaluate] HTTP status   :",
+      httpResponse.status,
+      httpResponse.statusText,
+    );
 
     if (!httpResponse.ok) {
       process.stderr.write("[evaluate] ✗ API HTTP error\n");
-      process.stderr.write("[evaluate]   status : " + httpResponse.status + "\n");
-      process.stderr.write("[evaluate]   body   : " + rawBody.slice(0, 400) + "\n");
+      process.stderr.write(
+        "[evaluate]   status : " + httpResponse.status + "\n",
+      );
+      process.stderr.write(
+        "[evaluate]   body   : " + rawBody.slice(0, 400) + "\n",
+      );
       return {
         ok: false,
         error: {
@@ -436,8 +462,16 @@ export async function handleEvaluate(
     }
 
     // ── Parse response — OpenAI-compatible (gateway) vs Anthropic native ──
-    type GatewayResp  = { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
-    type AnthropicResp = { content?: Array<{ type: string; text?: string }>; stop_reason?: string };
+    type GatewayResp = {
+      choices?: Array<{
+        message?: { content?: string };
+        finish_reason?: string;
+      }>;
+    };
+    type AnthropicResp = {
+      content?: Array<{ type: string; text?: string }>;
+      stop_reason?: string;
+    };
     let responseData: GatewayResp | AnthropicResp;
     try {
       responseData = JSON.parse(rawBody) as GatewayResp | AnthropicResp;
@@ -445,7 +479,10 @@ export async function handleEvaluate(
       process.stderr.write("[evaluate] ✗ API response is not valid JSON\n");
       return {
         ok: false,
-        error: { code: "upstream_error", message: "API returned non-JSON response." },
+        error: {
+          code: "upstream_error",
+          message: "API returned non-JSON response.",
+        },
       };
     }
 
@@ -461,16 +498,25 @@ export async function handleEvaluate(
 
     if (!rawText) {
       process.stderr.write("[evaluate] ✗ No text content in API response\n");
-      process.stderr.write("[evaluate]   responseData: " + JSON.stringify(responseData) + "\n");
+      process.stderr.write(
+        "[evaluate]   responseData: " + JSON.stringify(responseData) + "\n",
+      );
       return {
         ok: false,
-        error: { code: "schema_violation", message: "Model returned no text content." },
+        error: {
+          code: "schema_violation",
+          message: "Model returned no text content.",
+        },
       };
     }
 
-    console.log("[evaluate] ── RAW MODEL OUTPUT (FULL) ──────────────────────────");
+    console.log(
+      "[evaluate] ── RAW MODEL OUTPUT (FULL) ──────────────────────────",
+    );
     console.log(rawText);
-    console.log("[evaluate] ── END RAW MODEL OUTPUT ────────────────────────────");
+    console.log(
+      "[evaluate] ── END RAW MODEL OUTPUT ────────────────────────────",
+    );
 
     // ── JSON extraction ────────────────────────────────────────────────────
     toolInput = extractJSON(rawText);
@@ -479,10 +525,16 @@ export async function handleEvaluate(
       process.stderr.write("[evaluate]   raw (full): " + rawText + "\n");
       return {
         ok: false,
-        error: { code: "schema_violation", message: "Model did not return parseable JSON." },
+        error: {
+          code: "schema_violation",
+          message: "Model did not return parseable JSON.",
+        },
       };
     }
-    console.log("[evaluate] ✓ JSON extracted, keys:", Object.keys(toolInput as Record<string, unknown>).join(", "));
+    console.log(
+      "[evaluate] ✓ JSON extracted, keys:",
+      Object.keys(toolInput as Record<string, unknown>).join(", "),
+    );
   } catch (err) {
     console.error("[evaluate] Fetch error:", err);
     const msg = err instanceof Error ? err.message : "Unknown network error.";
@@ -502,34 +554,85 @@ export async function handleEvaluate(
   const latencyMs = Date.now() - startMs;
 
   // 6. Validate tool output
-  console.log("[evaluate] ── ZOD VALIDATION ──────────────────────────────────");
+  console.log(
+    "[evaluate] ── ZOD VALIDATION ──────────────────────────────────",
+  );
   // ── PRE-VALIDATION FIELD AUDIT ─────────────────────────────────────────────
   // Logs the exact values the model returned for every top-level field so the
   // root cause of any Zod failure is visible without reading a dense JSON dump.
   {
     const t = toolInput as Record<string, unknown>;
     const sc = t["scorecard"] as Record<string, unknown> | null | undefined;
-    const dims = Array.isArray(sc?.["dimensions"]) ? (sc!["dimensions"] as unknown[]) : null;
-    const dimIds = dims?.map((d) => (d as Record<string, unknown>)["id"]).join(", ") ?? "MISSING";
-    process.stderr.write("\n[evaluate] ── PRE-VALIDATION FIELD AUDIT ───────────────────\n");
-    process.stderr.write("[evaluate]   top-level keys     : " + JSON.stringify(Object.keys(t)) + "\n");
-    process.stderr.write("[evaluate]   mode               : " + JSON.stringify(t["mode"]) + "\n");
-    process.stderr.write("[evaluate]   typeof mode        : " + typeof t["mode"] + "\n");
-    process.stderr.write("[evaluate]   summary (80)       : " + JSON.stringify(String(t["summary"] ?? "").slice(0, 80)) + "\n");
-    process.stderr.write("[evaluate]   scorecard keys     : " + JSON.stringify(Object.keys(sc ?? {})) + "\n");
-    process.stderr.write("[evaluate]   dimension count    : " + (dims?.length ?? "MISSING") + "\n");
+    const dims = Array.isArray(sc?.["dimensions"])
+      ? (sc!["dimensions"] as unknown[])
+      : null;
+    const dimIds =
+      dims?.map((d) => (d as Record<string, unknown>)["id"]).join(", ") ??
+      "MISSING";
+    process.stderr.write(
+      "\n[evaluate] ── PRE-VALIDATION FIELD AUDIT ───────────────────\n",
+    );
+    process.stderr.write(
+      "[evaluate]   top-level keys     : " +
+        JSON.stringify(Object.keys(t)) +
+        "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   mode               : " + JSON.stringify(t["mode"]) + "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   typeof mode        : " + typeof t["mode"] + "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   summary (80)       : " +
+        JSON.stringify(String(t["summary"] ?? "").slice(0, 80)) +
+        "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   scorecard keys     : " +
+        JSON.stringify(Object.keys(sc ?? {})) +
+        "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   dimension count    : " + (dims?.length ?? "MISSING") + "\n",
+    );
     process.stderr.write("[evaluate]   dimension ids      : " + dimIds + "\n");
-    process.stderr.write("[evaluate]   risks count        : " + (Array.isArray(t["risks"]) ? (t["risks"] as unknown[]).length : "MISSING/wrong-type") + "\n");
-    process.stderr.write("[evaluate]   missingValidation  : " + (Array.isArray(t["missingValidation"]) ? (t["missingValidation"] as unknown[]).length : "MISSING/wrong-type") + "\n");
-    process.stderr.write("[evaluate]   refineRec type     : " + (t["refineRecommendation"] === null ? "null" : typeof t["refineRecommendation"]) + "\n");
-    process.stderr.write("[evaluate] ─────────────────────────────────────────────────────\n\n");
+    process.stderr.write(
+      "[evaluate]   risks count        : " +
+        (Array.isArray(t["risks"])
+          ? (t["risks"] as unknown[]).length
+          : "MISSING/wrong-type") +
+        "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   missingValidation  : " +
+        (Array.isArray(t["missingValidation"])
+          ? (t["missingValidation"] as unknown[]).length
+          : "MISSING/wrong-type") +
+        "\n",
+    );
+    process.stderr.write(
+      "[evaluate]   refineRec type     : " +
+        (t["refineRecommendation"] === null
+          ? "null"
+          : typeof t["refineRecommendation"]) +
+        "\n",
+    );
+    process.stderr.write(
+      "[evaluate] ─────────────────────────────────────────────────────\n\n",
+    );
   }
   const validated = ToolOutputSchema.safeParse(toolInput);
   if (!validated.success) {
     // schema_violation #2 — tool input present but Zod rejects its shape
-    process.stderr.write("[evaluate] ✗ SCHEMA_VIOLATION #2 — Zod validation failed\n");
+    process.stderr.write(
+      "[evaluate] ✗ SCHEMA_VIOLATION #2 — Zod validation failed\n",
+    );
     // Log each Zod issue with its path AND the actual value at that path
-    const getValueAtPath = (obj: unknown, path: (string | number)[]): unknown => {
+    const getValueAtPath = (
+      obj: unknown,
+      path: (string | number)[],
+    ): unknown => {
       let cur: unknown = obj;
       for (const key of path) {
         if (cur == null || typeof cur !== "object") return undefined;
@@ -539,22 +642,33 @@ export async function handleEvaluate(
     };
     validated.error.issues.forEach((issue, i) => {
       const val = getValueAtPath(toolInput, issue.path as (string | number)[]);
-      const valStr = typeof val === "string"
-        ? `"${val.slice(0, 300)}"${val.length > 300 ? `… (+${val.length - 300} chars, total=${val.length})` : ` (length=${val.length})`}`
-        : JSON.stringify(val)?.slice(0, 200);
+      const valStr =
+        typeof val === "string"
+          ? `"${val.slice(0, 300)}"${val.length > 300 ? `… (+${val.length - 300} chars, total=${val.length})` : ` (length=${val.length})`}`
+          : JSON.stringify(val)?.slice(0, 200);
       // For parent-context: one level up
       const parentPath = (issue.path as (string | number)[]).slice(0, -1);
       const parentVal = getValueAtPath(toolInput, parentPath);
-      process.stderr.write(`\n[evaluate]   ── issue[${i}] ─────────────────────────────────────\n`);
-      process.stderr.write(`[evaluate]     path    : ${JSON.stringify(issue.path)}\n`);
+      process.stderr.write(
+        `\n[evaluate]   ── issue[${i}] ─────────────────────────────────────\n`,
+      );
+      process.stderr.write(
+        `[evaluate]     path    : ${JSON.stringify(issue.path)}\n`,
+      );
       process.stderr.write(`[evaluate]     code    : ${issue.code}\n`);
       process.stderr.write(`[evaluate]     message : ${issue.message}\n`);
       process.stderr.write(`[evaluate]     value   : ${valStr}\n`);
       if (parentPath.length > 0) {
-        process.stderr.write(`[evaluate]     parent  : ${JSON.stringify(parentVal)?.slice(0, 400)}\n`);
+        process.stderr.write(
+          `[evaluate]     parent  : ${JSON.stringify(parentVal)?.slice(0, 400)}\n`,
+        );
       }
     });
-    process.stderr.write("\n[evaluate]   toolInput (full):\n" + JSON.stringify(toolInput, null, 2) + "\n");
+    process.stderr.write(
+      "\n[evaluate]   toolInput (full):\n" +
+        JSON.stringify(toolInput, null, 2) +
+        "\n",
+    );
     return {
       ok: false,
       error: {
@@ -566,11 +680,17 @@ export async function handleEvaluate(
   console.log("[evaluate] ✓ Zod validation passed");
 
   // 7. Tone lint
-  console.log("[evaluate] ── TONE LINT ─────────────────────────────────────────");
+  console.log(
+    "[evaluate] ── TONE LINT ─────────────────────────────────────────",
+  );
   if (!passesToneLint(validated.data)) {
     // schema_violation #3 — banned phrase in output
-    process.stderr.write("[evaluate] ✗ SCHEMA_VIOLATION #3 — tone lint failed\n");
-    process.stderr.write("[evaluate]   summary: " + validated.data.summary + "\n");
+    process.stderr.write(
+      "[evaluate] ✗ SCHEMA_VIOLATION #3 — tone lint failed\n",
+    );
+    process.stderr.write(
+      "[evaluate]   summary: " + validated.data.summary + "\n",
+    );
     return {
       ok: false,
       error: {

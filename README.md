@@ -234,7 +234,7 @@ cp .env.example .env.local
 # Edit .env.local:
 #   USE_COMPANY_GATEWAY=false
 #   ANTHROPIC_API_KEY=sk-ant-api03-...   ← from console.anthropic.com
-#   ANTHROPIC_MODEL=claude-3-haiku-20240307
+#   ANTHROPIC_MODEL=claude-sonnet-4-6
 #   USE_MOCK_EVALUATIONS=false
 npm run dev
 ```
@@ -288,7 +288,7 @@ For development using a personal Anthropic key:
 ```env
 USE_COMPANY_GATEWAY=false
 ANTHROPIC_API_KEY=sk-ant-api03-...
-ANTHROPIC_MODEL=claude-3-haiku-20240307
+ANTHROPIC_MODEL=claude-sonnet-4-6
 USE_MOCK_EVALUATIONS=false
 ```
 
@@ -296,12 +296,12 @@ USE_MOCK_EVALUATIONS=false
 
 Set these in the Vercel project dashboard (Project → Settings → Environment Variables):
 
-| Variable               | Value                     | Notes                           |
-| ---------------------- | ------------------------- | ------------------------------- |
-| `USE_COMPANY_GATEWAY`  | `false`                   | Routes to direct Anthropic API  |
-| `ANTHROPIC_API_KEY`    | `sk-ant-api03-...`        | Your personal Anthropic key     |
-| `ANTHROPIC_MODEL`      | `claude-3-haiku-20240307` | Any model available on your key |
-| `USE_MOCK_EVALUATIONS` | `false`                   | Enables live evaluations        |
+| Variable               | Value               | Notes                           |
+| ---------------------- | ------------------- | ------------------------------- |
+| `USE_COMPANY_GATEWAY`  | `false`             | Routes to direct Anthropic API  |
+| `ANTHROPIC_API_KEY`    | `sk-ant-api03-...`  | Your personal Anthropic key     |
+| `ANTHROPIC_MODEL`      | `claude-sonnet-4-6` | Any model available on your key |
+| `USE_MOCK_EVALUATIONS` | `false`             | Enables live evaluations        |
 
 ### All variables reference
 
@@ -311,7 +311,7 @@ Set these in the Vercel project dashboard (Project → Settings → Environment 
 | `COMPANY_GATEWAY_URL`  | `USE_COMPANY_GATEWAY=true`  | —                          |
 | `COMPANY_GATEWAY_KEY`  | `USE_COMPANY_GATEWAY=true`  | —                          |
 | `ANTHROPIC_API_KEY`    | `USE_COMPANY_GATEWAY=false` | —                          |
-| `ANTHROPIC_MODEL`      | Always (live mode)          | `claude-3-haiku-20240307`  |
+| `ANTHROPIC_MODEL`      | Always (live mode)          | `claude-sonnet-4-6`        |
 | `USE_MOCK_EVALUATIONS` | Always                      | `true` (mock on if unset)  |
 
 **`USE_MOCK_EVALUATIONS`** must be the exact string `"false"` to enable live calls. Any other value — including absent — keeps mock mode active. The app never calls the AI provider by accident.
@@ -364,7 +364,7 @@ npm run lint      # ESLint check across all source files
 
 ### AI Integration
 
-- **Anthropic Claude** — `claude-opus-4-5` by default; model is configurable via `ANTHROPIC_MODEL`
+- **Anthropic Claude** — `claude-sonnet-4-6` by default; model is configurable via `ANTHROPIC_MODEL`
 - **Mode-specific prompts** — `prompts/system.md` + `prompts/{feature,change,concept}.md`, each with a complete 7-dimension output example
 - **Schema-enforced output** — model response is validated against a strict Zod schema before the result is assembled; invalid responses are rejected, not displayed
 
@@ -462,7 +462,7 @@ Vercel Serverless Function
 
 - Uses `ANTHROPIC_API_KEY` with `anthropic-version: 2023-06-01`
 - Anthropic native request format (`system` as top-level field)
-- Model name is a standard Anthropic model (e.g. `claude-3-haiku-20240307`)
+- Model name is a standard Anthropic model (e.g. `claude-sonnet-4-6`)
 - Suited for public deployment without any gateway dependency
 
 ### Why this separation exists
