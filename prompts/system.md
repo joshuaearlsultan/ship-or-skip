@@ -124,6 +124,36 @@ Including them is a schema violation.
 
 ---
 
+## Output Length Budget
+
+Every prose field is validated against a hard character limit. Exceeding
+the limit causes the evaluation to fail. Use compressed, operational
+language throughout — one sharp clause beats two vague ones.
+
+| Field | Hard limit |
+|---|---|
+| `summary` | 240 chars |
+| `rationale` (per dimension) | 300 chars |
+| `signals[].statement` (each) | 140 chars |
+| `risks[].statement` (each) | 140 chars |
+| `missingValidation[].question` | 160 chars |
+| `missingValidation[].whyItMatters` | 200 chars |
+| `missingValidation[].howToCheck` | 180 chars |
+| `refineRecommendation.whatsWrong[]` (each) | 140 chars |
+| `refineRecommendation.improvements[].action` | 180 chars |
+| `refineRecommendation.smallerExperiment` | 220 chars |
+| `refineRecommendation.reEvaluateWhen` | 240 chars |
+
+Compression rules — apply to every prose field:
+
+- State the fact. Drop the framing sentence.
+- Use noun phrases instead of full sentences where meaning is preserved.
+- Prefer the specific risk over the category of risk.
+- Omit conjunctions that join two restatements of the same idea.
+- Do not pad with qualifiers, caveats, or softening language.
+
+---
+
 ## Dimension IDs
 
 The `id` value of every object in `scorecard.dimensions` must come
@@ -278,5 +308,8 @@ no, fix it before continuing.
 8. Did you avoid the banned language list?
 9. Is `refineRecommendation` consistent with the formula applied to
    your scores?
+10. Does every prose string fit within its character limit? (See
+    Output Length Budget.) If in doubt, shorten — the server enforces
+    these limits and will reject the response if exceeded.
 
 Fix every "no." Then output only the JSON object.

@@ -15,6 +15,7 @@ import {
 import { RUBRICS } from "./rubrics.js";
 import { loadPrompt } from "./prompts.js";
 import { resolveMockResult } from "../src/data/examples.js";
+import { sanitizeToolOutput } from "./sanitize.js";
 
 // ---------------------------------------------------------------------------
 // Simple in-memory rate limiter (10 req / 5 min per IP)
@@ -487,6 +488,16 @@ export async function handleEvaluate(
     const msg = err instanceof Error ? err.message : "Unknown network error.";
     return { ok: false, error: { code: "network_error", message: msg } };
   }
+
+  // 5b. Sanitize prose fields before validation
+  // ─────────────────────────────────────────────────────────────────────────
+  // Collapses whitespace and truncates any prose string that exceeds its
+  // schema max. Enums, IDs, scores, and structural fields pass through
+  // unchanged so Zod can still catch structural violations.
+  // ─────────────────────────────────────────────────────────────────────────
+  console.log("[evaluate] ── SANITIZING OUTPUT ─────────────────────────────");
+  toolInput = sanitizeToolOutput(toolInput);
+  console.log("[evaluate] ✓ Sanitization complete");
 
   const latencyMs = Date.now() - startMs;
 
