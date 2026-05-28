@@ -1,7 +1,7 @@
 import type { IdeaMode } from '../types/request'
 import type { DecisionResult } from '../types/decision'
-import { refineChangeMock, shipFeatureMock, skipFeatureMock } from './mockResults'
-import { aiFirstSkipMock, soc2RefineMock } from './demoExamples'
+import { refineChangeMock, shipFeatureMock, skipFeatureMock } from './mockResults.js'
+import { aiFirstSkipMock, soc2RefineMock } from './demoExamples.js'
 
 export interface Example {
   id: string

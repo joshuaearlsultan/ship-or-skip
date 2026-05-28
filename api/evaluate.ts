@@ -11,10 +11,10 @@ import {
   EvaluationRequestSchema,
   ToolOutputSchema,
   type ToolOutput,
-} from "./schema";
-import { RUBRICS } from "./rubrics";
-import { loadPrompt } from "./prompts";
-import { resolveMockResult } from "../src/data/examples";
+} from "./schema.js";
+import { RUBRICS } from "./rubrics.js";
+import { loadPrompt } from "./prompts.js";
+import { resolveMockResult } from "../src/data/examples.js";
 
 // ---------------------------------------------------------------------------
 // Simple in-memory rate limiter (10 req / 5 min per IP)
@@ -308,17 +308,18 @@ export async function handleEvaluate(
   // 4. Load prompt
   const { systemPrompt, promptVersion } = loadPrompt(req.mode);
 
-  // 5. Call model via gateway /v1/chat/completions (OpenAI-compatible)
+  // 5. Call AI provider
   // ─────────────────────────────────────────────────────────────────────────
-  // The gateway's /v1/messages endpoint silently strips the Anthropic-native
-  // top-level `system` field — confirmed by request-log token counts and a
-  // sentinel test.  /v1/chat/completions preserves role:"system" messages
-  // end-to-end.  No SDK: plain fetch so the request format is explicit.
+  // USE_COMPANY_GATEWAY=true  → company gateway  /v1/chat/completions
+  //                             (OpenAI-compatible format, system in messages)
+  // USE_COMPANY_GATEWAY=false → direct Anthropic  /v1/messages
+  //                             (native format, system as top-level field)
+  // No SDK: plain fetch so the request shape is explicit and auditable.
   // ─────────────────────────────────────────────────────────────────────────
   const startMs = Date.now();
-  const modelId = process.env.ANTHROPIC_MODEL ?? "claude-opus-4-5";
-  const baseUrl = process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com";
-  const gatewayEndpoint = `${baseUrl}/v1/chat/completions`;
+  const useGateway = process.env.USE_COMPANY_GATEWAY === "true";
+  const modelId = process.env.ANTHROPIC_MODEL ??
+    (useGateway ? "claude-quality" : "claude-3-5-sonnet-20241022");
 
   // Mode label used in the user turn so the model never has to infer it.
   const modeLabel: Record<IdeaMode, string> = {
@@ -334,35 +335,56 @@ export async function handleEvaluate(
     `Output only valid JSON matching the schema.\n\n` +
     `Idea:\n${req.idea}`;
 
-  // System prompt is the FIRST message; user content follows.
-  const requestPayload = {
-    model: modelId,
-    max_tokens: 4096,
-    messages: [
-      { role: "system" as const, content: systemPrompt },
-      { role: "user"   as const, content: userMessage  },
-    ],
-  };
+  // ── Provider-specific endpoint, headers, and body ────────────────────────
+  const apiEndpoint = useGateway
+    ? `${process.env.COMPANY_GATEWAY_URL ?? ""}/v1/chat/completions`
+    : `${process.env.ANTHROPIC_BASE_URL ?? "https://api.anthropic.com"}/v1/messages`;
+
+  const requestHeaders: Record<string, string> = useGateway
+    ? {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.COMPANY_GATEWAY_KEY ?? "",
+      }
+    : {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
+        "anthropic-version": "2023-06-01",
+      };
+
+  // Gateway: system as role:"system" message (OpenAI format)
+  // Anthropic: system is a top-level field; messages is user-only
+  const requestPayload = useGateway
+    ? {
+        model: modelId,
+        max_tokens: 4096,
+        messages: [
+          { role: "system" as const, content: systemPrompt },
+          { role: "user"   as const, content: userMessage  },
+        ],
+      }
+    : {
+        model: modelId,
+        max_tokens: 4096,
+        system: systemPrompt,
+        messages: [{ role: "user" as const, content: userMessage }],
+      };
 
   // ── Diagnostic: endpoint + full outbound payload ─────────────────────────
   console.log("[evaluate] ── REQUEST ──────────────────────────────────────");
-  console.log("[evaluate] endpoint       :", gatewayEndpoint);
-  console.log("[evaluate] model          :", requestPayload.model);
-  console.log("[evaluate] max_tokens     :", requestPayload.max_tokens);
+  console.log("[evaluate] provider       :", useGateway ? "company-gateway" : "anthropic-direct");
+  console.log("[evaluate] endpoint       :", apiEndpoint);
+  console.log("[evaluate] model          :", modelId);
+  console.log("[evaluate] max_tokens     :", 4096);
   console.log("[evaluate] prompt version :", promptVersion);
-  console.log("[evaluate] messages count :", requestPayload.messages.length);
   console.log("[evaluate] ── OUTBOUND PAYLOAD (FULL) ─────────────────────");
   console.log(JSON.stringify(requestPayload, null, 2));
   console.log("[evaluate] ── END OUTBOUND PAYLOAD ────────────────────────");
 
   let toolInput: unknown;
   try {
-    const httpResponse = await fetch(gatewayEndpoint, {
+    const httpResponse = await fetch(apiEndpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY ?? "",
-      },
+      headers: requestHeaders,
       body: JSON.stringify(requestPayload),
     });
 
@@ -375,38 +397,44 @@ export async function handleEvaluate(
     console.log("[evaluate] HTTP status   :", httpResponse.status, httpResponse.statusText);
 
     if (!httpResponse.ok) {
-      process.stderr.write("[evaluate] ✗ Gateway HTTP error\n");
+      process.stderr.write("[evaluate] ✗ API HTTP error\n");
       process.stderr.write("[evaluate]   status : " + httpResponse.status + "\n");
       process.stderr.write("[evaluate]   body   : " + rawBody.slice(0, 400) + "\n");
       return {
         ok: false,
         error: {
           code: "upstream_error",
-          message: `Gateway returned ${httpResponse.status}: ${rawBody.slice(0, 200)}`,
+          message: `API returned ${httpResponse.status}: ${rawBody.slice(0, 200)}`,
         },
       };
     }
 
-    // ── Parse OpenAI-format response ──────────────────────────────────────
-    let responseData: { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
+    // ── Parse response — OpenAI-compatible (gateway) vs Anthropic native ──
+    type GatewayResp  = { choices?: Array<{ message?: { content?: string }; finish_reason?: string }> };
+    type AnthropicResp = { content?: Array<{ type: string; text?: string }>; stop_reason?: string };
+    let responseData: GatewayResp | AnthropicResp;
     try {
-      responseData = JSON.parse(rawBody);
+      responseData = JSON.parse(rawBody) as GatewayResp | AnthropicResp;
     } catch {
-      process.stderr.write("[evaluate] ✗ Gateway response is not valid JSON\n");
+      process.stderr.write("[evaluate] ✗ API response is not valid JSON\n");
       return {
         ok: false,
-        error: { code: "upstream_error", message: "Gateway returned non-JSON response." },
+        error: { code: "upstream_error", message: "API returned non-JSON response." },
       };
     }
 
-    const rawText = responseData?.choices?.[0]?.message?.content ?? "";
-    const finishReason = responseData?.choices?.[0]?.finish_reason ?? "unknown";
+    const rawText = useGateway
+      ? ((responseData as GatewayResp).choices?.[0]?.message?.content ?? "")
+      : ((responseData as AnthropicResp).content?.[0]?.text ?? "");
+    const finishReason = useGateway
+      ? ((responseData as GatewayResp).choices?.[0]?.finish_reason ?? "unknown")
+      : ((responseData as AnthropicResp).stop_reason ?? "unknown");
 
     console.log("[evaluate] finish_reason  :", finishReason);
     console.log("[evaluate] raw text length:", rawText.length);
 
     if (!rawText) {
-      process.stderr.write("[evaluate] ✗ No content in response choices\n");
+      process.stderr.write("[evaluate] ✗ No text content in API response\n");
       process.stderr.write("[evaluate]   responseData: " + JSON.stringify(responseData) + "\n");
       return {
         ok: false,

@@ -1,6 +1,6 @@
 import type { IdeaMode } from '../types/request'
 import type { DecisionResult } from '../types/decision'
-import { refineChangeMock, shipFeatureMock, skipFeatureMock } from './mockResults'
+import { refineChangeMock, shipFeatureMock, skipFeatureMock } from './mockResults.js'
 
 export interface DemoExample {
   id: string
