@@ -85,7 +85,7 @@ export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, te
           className="block w-full resize-y border-0 bg-transparent px-4 py-3 text-[15px] leading-relaxed text-neutral-900 placeholder:text-neutral-400 focus:outline-none disabled:opacity-60 dark:text-neutral-100 dark:placeholder:text-neutral-600"
         />
 
-        {/* Footer */}
+        {/* Hints / help footer */}
         <div className="border-t border-neutral-100 px-4 py-2.5 dark:border-surface-border">
 
           {/* Row 1 — hints (when empty) or clear button (when filled) + char count */}
@@ -140,17 +140,18 @@ export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, te
           ) : null}
 
         </div>
-      </div>
 
-      {/* Step 3 — single primary action */}
-      <div className="flex items-center">
-        <button
-          type="submit"
-          disabled={!canRun}
-          className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white dark:disabled:bg-surface-2 dark:disabled:text-neutral-600"
-        >
-          {busy ? 'Running…' : 'Run Ship or Skip'}
-        </button>
+        {/* Action area — separated from the help footer by a full-weight border */}
+        <div className="border-t border-neutral-200 px-4 py-3 dark:border-surface-border">
+          <button
+            type="submit"
+            disabled={!canRun}
+            className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-neutral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 disabled:cursor-not-allowed disabled:bg-neutral-300 dark:bg-neutral-100 dark:text-neutral-950 dark:hover:bg-white dark:disabled:bg-surface-2 dark:disabled:text-neutral-600"
+          >
+            {busy ? 'Running…' : 'Run Ship or Skip'}
+          </button>
+        </div>
+
       </div>
 
     </form>
