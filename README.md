@@ -16,9 +16,9 @@ No sign-up. No API key required. Click **Try Example** to explore all three verd
 
 ## Screenshots
 
-| Landing                                         | Evaluator                                                     |
-| ----------------------------------------------- | ------------------------------------------------------------- |
-| ![Landing page](./docs/screenshots/landing.png) | ![Demo page — example decisions](./docs/screenshots/demo.png) |
+| Landing                                         | Evaluator                                           |
+| ----------------------------------------------- | --------------------------------------------------- |
+| ![Landing page](./docs/screenshots/landing.png) | ![Evaluator page](./docs/screenshots/evaluator.png) |
 
 | Ship                                         | Refine                                           | Skip                                         |
 | -------------------------------------------- | ------------------------------------------------ | -------------------------------------------- |
@@ -36,17 +36,17 @@ The same idea evaluated twice produces the same verdict. Every decision is trace
 
 ## Features
 
-| Feature                        | Description                                                                                                                     |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Three verdicts**             | Ship, Refine, or Skip — computed from weighted dimension scores, not model opinion                                              |
-| **Three evaluation modes**     | Feature Idea, Product Change, Concept — each with a distinct 7-dimension rubric                                                 |
-| **Risk identification**        | 2–5 named risks per evaluation, each linked to a rubric dimension and rated high / medium / low                                 |
-| **Validation gap analysis**    | Missing evidence surfaces as concrete questions with a `whyItMatters` explanation and a `howToCheck` action                     |
-| **Refine recommendations**     | When a verdict is Refine: named weaknesses, targeted improvements, and a specific re-evaluation trigger                         |
-| **Copy to Markdown**           | One-click export of the full evaluation — verdict, scorecard, risks, and gaps                                                   |
-| **Mock mode**                  | Full UI with no API key; five pre-built results cover all three modes and all three verdict outcomes                            |
-| **In-memory result cache**     | Identical `(mode, idea)` pairs return cached results, avoiding duplicate API calls                                              |
-| **Dark mode**                  | Persists to `localStorage`; respects `prefers-color-scheme` on first visit                                                      |
+| Feature                     | Description                                                                                                 |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Three verdicts**          | Ship, Refine, or Skip — computed from weighted dimension scores, not model opinion                          |
+| **Three evaluation modes**  | Feature Idea, Product Change, Concept — each with a distinct 7-dimension rubric                             |
+| **Risk identification**     | 2–5 named risks per evaluation, each linked to a rubric dimension and rated high / medium / low             |
+| **Validation gap analysis** | Missing evidence surfaces as concrete questions with a `whyItMatters` explanation and a `howToCheck` action |
+| **Refine recommendations**  | When a verdict is Refine: named weaknesses, targeted improvements, and a specific re-evaluation trigger     |
+| **Copy to Markdown**        | One-click export of the full evaluation — verdict, scorecard, risks, and gaps                               |
+| **Mock mode**               | Full UI with no API key; five pre-built results cover all three modes and all three verdict outcomes        |
+| **In-memory result cache**  | Identical `(mode, idea)` pairs return cached results, avoiding duplicate API calls                          |
+| **Dark mode**               | Persists to `localStorage`; respects `prefers-color-scheme` on first visit                                  |
 
 ---
 
@@ -87,14 +87,14 @@ npm run dev
 
 Copy `.env.example` to `.env.local`. This file is gitignored and never committed.
 
-| Variable               | Purpose                                        | Default                          |
-| ---------------------- | ---------------------------------------------- | -------------------------------- |
-| `USE_MOCK_EVALUATIONS` | Set to `"false"` to enable live AI calls       | `true` (mock active if absent)   |
-| `USE_COMPANY_GATEWAY`  | Route via company AI gateway instead of direct | `false`                          |
-| `ANTHROPIC_API_KEY`    | Anthropic key (direct mode)                    | —                                |
-| `ANTHROPIC_MODEL`      | Model identifier                               | `claude-sonnet-4-6`              |
-| `COMPANY_GATEWAY_URL`  | Gateway endpoint URL (gateway mode)            | —                                |
-| `COMPANY_GATEWAY_KEY`  | Gateway auth key (gateway mode)                | —                                |
+| Variable               | Purpose                                        | Default                        |
+| ---------------------- | ---------------------------------------------- | ------------------------------ |
+| `USE_MOCK_EVALUATIONS` | Set to `"false"` to enable live AI calls       | `true` (mock active if absent) |
+| `USE_COMPANY_GATEWAY`  | Route via company AI gateway instead of direct | `false`                        |
+| `ANTHROPIC_API_KEY`    | Anthropic key (direct mode)                    | —                              |
+| `ANTHROPIC_MODEL`      | Model identifier                               | `claude-sonnet-4-6`            |
+| `COMPANY_GATEWAY_URL`  | Gateway endpoint URL (gateway mode)            | —                              |
+| `COMPANY_GATEWAY_KEY`  | Gateway auth key (gateway mode)                | —                              |
 
 `USE_MOCK_EVALUATIONS` must be the exact string `"false"` to enable live calls. Any other value — including absent — keeps mock mode active. The app never calls an AI provider by accident.
 
@@ -156,9 +156,9 @@ Set `USE_COMPANY_GATEWAY=false`, `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL=claude-so
 
 ## Documentation
 
-| Document                                              | Contents                                                               |
-| ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| Document                                               | Contents                                                                 |
+| ------------------------------------------------------ | ------------------------------------------------------------------------ |
 | [Evaluation Framework](./docs/evaluation-framework.md) | Rubric specification, dimension weights, verdict formulas, scoring logic |
-| [Configuration](./docs/configuration.md)              | Environment variables, Vercel deployment, troubleshooting              |
-| [Architecture](./docs/architecture.md)                | Provider abstraction, pipeline design, project structure               |
-| [API Contract](./docs/api-contract.md)                | `POST /api/evaluate` request and response schemas                      |
+| [Configuration](./docs/configuration.md)               | Environment variables, Vercel deployment, troubleshooting                |
+| [Architecture](./docs/architecture.md)                 | Provider abstraction, pipeline design, project structure                 |
+| [API Contract](./docs/api-contract.md)                 | `POST /api/evaluate` request and response schemas                        |
