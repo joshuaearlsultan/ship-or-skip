@@ -52,9 +52,9 @@ export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, te
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="space-y-2">
         <ModeTabs value={mode} onChange={handleModeChange} disabled={busy} />
-        <p className="text-xs text-neutral-500 dark:text-neutral-600">
+        <p className="text-sm text-neutral-500 dark:text-neutral-500">
           {descriptor.blurb}
         </p>
       </div>
@@ -83,12 +83,7 @@ export function InputSection({ busy, idea, onIdeaChange, onRun, onModeChange, te
               <span className="text-[11px] text-neutral-400 dark:text-neutral-600">
                 Include:
               </span>
-              {[
-                'User problem',
-                'Target user',
-                'Assumptions',
-                'Expected outcome',
-              ].map((hint) => (
+              {descriptor.hints.map((hint) => (
                 <span
                   key={hint}
                   className="rounded bg-neutral-100 px-1.5 py-0.5 text-[11px] text-neutral-500 dark:bg-surface-2 dark:text-neutral-500"

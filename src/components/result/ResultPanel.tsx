@@ -157,12 +157,12 @@ function ReadyState({
   return (
     <div className="space-y-4">
       <DecisionCard result={result} />
-      <ScorecardSection dimensions={result.scorecard.dimensions} />
-      <RisksSection risks={result.risks} />
-      <MissingValidationSection items={result.missingValidation} />
       {result.refineRecommendation ? (
         <RefineSection recommendation={result.refineRecommendation} />
       ) : null}
+      <ScorecardSection dimensions={result.scorecard.dimensions} />
+      <RisksSection risks={result.risks} />
+      <MissingValidationSection items={result.missingValidation} />
       <div className="flex items-center justify-between pt-1">
         <CacheToast show={fromCache} />
         <div className="flex items-center gap-2">
@@ -462,38 +462,56 @@ function RisksSection({ risks }: { risks: Risk[] }) {
 // ─── Validation gaps ──────────────────────────────────────────────────────────
 
 function MissingValidationSection({ items }: { items: MissingValidation[] }) {
+  const [open, setOpen] = useState(false)
   if (items.length === 0) return null
+
   return (
     <section
       aria-label="Validation gaps"
-      className="rounded-xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-surface-border dark:bg-surface-1"
+      className="rounded-xl border border-neutral-200 bg-white shadow-sm dark:border-surface-border dark:bg-surface-1"
     >
-      <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-200">
-        Validation gaps
-      </h2>
-      <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-600">
-        Answer these before committing to the work.
-      </p>
-      <ul className="mt-3 space-y-4">
-        {items.map((m, i) => (
-          <li key={i} className="space-y-1">
-            <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-200">
-              {m.question}
-            </p>
-            <p className="text-[12px] text-neutral-500 dark:text-neutral-500">
-              {m.whyItMatters}
-            </p>
-            <div className="mt-1.5 flex items-start gap-2 rounded-md bg-neutral-50 px-2.5 py-2 dark:bg-surface-2">
-              <span className="mt-px shrink-0 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-600">
-                Check
-              </span>
-              <p className="text-[12px] text-neutral-700 dark:text-neutral-400">
-                {m.howToCheck}
-              </p>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between px-5 py-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-neutral-300 dark:focus-visible:ring-neutral-600"
+      >
+        <h2 className="text-sm font-semibold text-neutral-900 dark:text-neutral-200">
+          Validation gaps
+        </h2>
+        <span className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-600">
+          {items.length} {items.length === 1 ? 'gap' : 'gaps'}
+          <Chevron open={open} />
+        </span>
+      </button>
+
+      {open ? (
+        <div className="px-5 pb-5">
+          <p className="mb-3 text-xs text-neutral-500 dark:text-neutral-600">
+            Answer these before committing to the work.
+          </p>
+          <ul className="space-y-4">
+            {items.map((m, i) => (
+              <li key={i} className="space-y-1">
+                <p className="text-[13px] font-semibold text-neutral-900 dark:text-neutral-200">
+                  {m.question}
+                </p>
+                <p className="text-[12px] text-neutral-500 dark:text-neutral-500">
+                  {m.whyItMatters}
+                </p>
+                <div className="mt-1.5 flex items-start gap-2 rounded-md bg-neutral-50 px-2.5 py-2 dark:bg-surface-2">
+                  <span className="mt-px shrink-0 text-[11px] font-semibold uppercase tracking-wider text-neutral-400 dark:text-neutral-600">
+                    Check
+                  </span>
+                  <p className="text-[12px] text-neutral-700 dark:text-neutral-400">
+                    {m.howToCheck}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   )
 }
